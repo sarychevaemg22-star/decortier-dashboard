@@ -97,19 +97,16 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера (общая)</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-response">-</span> <span class="text-base font-normal text-gray-500">часов</span></p>
-          <p class="text-xs text-gray-400 mt-1">от обращения до первого действия</p>
         </div>
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки (общий)</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-cycle">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
-          <p class="text-xs text-gray-400 mt-1">от создания до закрытия (успех/отказ)</p>
         </div>
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками (общий)</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-gap">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
-          <p class="text-xs text-gray-400 mt-1">у повторных клиентов</p>
         </div>
       </div>
 
@@ -130,13 +127,16 @@
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200"><tr>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600">Группа</th>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('name')">Клиент ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('deals')">Сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('closedDeals')">Успешных ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('conversion')">Конверсия ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('revenue')">Выручка ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCheck')">Средний чек ↕</th>
+              <th class="px-2 py-2 text-left font-semibold text-gray-600">Группа</th>
+              <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('name')">Клиент ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('deals')">Сделок ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('closedDeals')">Успешных ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('conversion')">Конверсия ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('revenue')">Выручка ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCheck')">Ср. чек ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgResp')">Ответ (ч) ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCyc')">Цикл (дн) ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgGap')">Между сделками (дн) ↕</th>
             </tr></thead>
             <tbody id="abc-table-body" class="divide-y divide-gray-100"></tbody>
           </table>
@@ -166,14 +166,16 @@
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200"><tr>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600">Коридор</th>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('bc_client')">Клиент ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_total')">Совокупный бюджет ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ клиента ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
+              <th class="px-2 py-2 text-left font-semibold text-gray-600">Коридор</th>
+              <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('bc_client')">Клиент ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgResp')">Ответ (ч) ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCyc')">Цикл (дн) ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgGap')">Между сделками (дн) ↕</th>
             </tr></thead>
             <tbody id="bc-table-body" class="divide-y divide-gray-100"></tbody>
           </table>
@@ -183,7 +185,6 @@
   </div>
 
   <script>
-    // ВАШ URL УЖЕ ВСТАВЛЕН СЮДА
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGVYV8t0jRsoc3y8NqxK20dFUB2YR6F8ZjQ5OZJtfhCoyo7r8eNKi93cc6hY4w9c0i/exec';
 
     let RAW_DEALS=[], FILTERS={}, currentTab='b2b', filteredDeals=[], abcData=[];
@@ -288,30 +289,59 @@
         if(stages.length&&!stages.includes(d.stage))return false;
         return true;
       });
+      
       const clientMap={};
       filteredDeals.forEach(d=>{
-        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,closedDates:[],dealsList:[]};
+        if(!clientMap[d.client]) clientMap[d.client]={client:d.client, deals:0, closedDeals:0, revenue:0, closedDates:[], dealsList:[], responseTimes:[], cycleTimes:[], dealGaps:[]};
         clientMap[d.client].deals+=1;
         clientMap[d.client].dealsList.push(d);
-        if((d.won||d.lost)&&d.closed){clientMap[d.client].closedDates.push(d.closed);}
-        if(d.won){clientMap[d.client].closedDeals+=1;clientMap[d.client].revenue+=d.amount;}
+        
+        if((d.won||d.lost) && d.closed) {
+          clientMap[d.client].closedDates.push(d.closed);
+          if(d.created) {
+            const cycleDays = (d.closed - d.created) / 86400000;
+            if(cycleDays >= 0 && cycleDays < 1000) clientMap[d.client].cycleTimes.push(cycleDays);
+          }
+        }
+        if(d.won) {
+          clientMap[d.client].closedDeals+=1;
+          clientMap[d.client].revenue+=d.amount;
+        }
+        if(d.created && d.changed && d.stage!=='Новый' && d.stage!=='Неразобранное') {
+          const respHours = (d.changed - d.created) / 3600000;
+          if(respHours >= 0 && respHours < 720) clientMap[d.client].responseTimes.push(respHours);
+        }
       });
+
+      Object.values(clientMap).forEach(c => {
+        const dates = c.closedDates.sort((a,b)=>a-b);
+        for(let i=1; i<dates.length; i++) {
+          const gap = (dates[i]-dates[i-1])/86400000;
+          if(gap >= 0) c.dealGaps.push(gap);
+        }
+      });
+
       const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenue-a.revenue);
       const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenue,0);
       let cum=0;
       abcData=clientsArr.map(c=>{
-        cum+=c.revenue;const pct=totalRevenue>0?cum/totalRevenue:0;
-        let abc='C';if(pct<=0.80)abc='A';else if(pct<=0.95)abc='B';
-        const avgCheck=c.closedDeals>0?c.revenue/c.closedDeals:0;
-        const conversion=c.deals>0?((c.closedDeals/c.deals)*100).toFixed(1):'0';
-        return {...c,abc,avgCheck,conversion:conversion+'%'};
+        cum+=c.revenue; const pct=totalRevenue>0?cum/totalRevenue:0;
+        let abc='C'; if(pct<=0.80)abc='A'; else if(pct<=0.95)abc='B';
+        const avgCheck=c.closedDeals>0 ? c.revenue/c.closedDeals : 0;
+        const conversion=c.deals>0 ? ((c.closedDeals/c.deals)*100).toFixed(1) : '0';
+        const avgResp = c.responseTimes.length ? (c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1) : 'N/A';
+        const avgCyc = c.cycleTimes.length ? (c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1) : 'N/A';
+        const avgGap = c.dealGaps.length ? (c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1) : 'N/A';
+        return {...c, abc, avgCheck, conversion: conversion+'%', avgResp, avgCyc, avgGap};
       });
-      if(abcGroups.length)abcData=abcData.filter(c=>abcGroups.includes(c.abc));
+      
+      if(abcGroups.length) abcData=abcData.filter(c=>abcGroups.includes(c.abc));
       const activeCount=years.length+months.length+types.length+stages.length+abcGroups.length;
       document.getElementById('filter-count').textContent=activeCount>0?`Активных фильтров: ${activeCount}`:'';
       resetExpandState();
       renderAll();
     }
+    
     function renderAll(){renderSummary();renderMetrics();renderFunnel();renderABCTable();renderInWork();renderBudgetCorridors();}
 
     function renderSummary(){
@@ -329,14 +359,26 @@
     }
 
     function renderMetrics(){
-      const responseTimes=[];
-      filteredDeals.forEach(d=>{if(d.created&&d.changed&&d.stage!=='Новый'&&d.stage!=='Неразобранное'){const h=(d.changed-d.created)/3600000;if(h>=0&&h<720)responseTimes.push(h);}});
-      const cycleTimes=[];
-      filteredDeals.forEach(d=>{if(d.created&&d.closed&&(d.won||d.lost)){const dd=(d.closed-d.created)/86400000;if(dd>=0&&dd<1000)cycleTimes.push(dd);}});
+      const responseTimes=[], cycleTimes=[], gaps=[];
       const clientClosed={};
-      filteredDeals.forEach(d=>{if(d.closed&&(d.won||d.lost)){if(!clientClosed[d.client])clientClosed[d.client]=[];clientClosed[d.client].push(d.closed);}});
-      const gaps=[];
-      Object.values(clientClosed).forEach(dates=>{if(dates.length>=2){dates.sort((a,b)=>a-b);for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)gaps.push(g);}}});
+      filteredDeals.forEach(d=>{
+        if(d.created&&d.changed&&d.stage!=='Новый'&&d.stage!=='Неразобранное'){
+          const h=(d.changed-d.created)/3600000; if(h>=0&&h<720) responseTimes.push(h);
+        }
+        if(d.created&&d.closed&&(d.won||d.lost)){
+          const dd=(d.closed-d.created)/86400000; if(dd>=0&&dd<1000) cycleTimes.push(dd);
+          if(!clientClosed[d.client]) clientClosed[d.client]=[];
+          clientClosed[d.client].push(d.closed);
+        }
+      });
+      Object.values(clientClosed).forEach(dates=>{
+        if(dates.length>=2){
+          dates.sort((a,b)=>a-b);
+          for(let i=1;i<dates.length;i++){
+            const g=(dates[i]-dates[i-1])/86400000; if(g>=0) gaps.push(g);
+          }
+        }
+      });
       const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):'N/A';
       document.getElementById('metric-response').textContent=avg(responseTimes);
       document.getElementById('metric-cycle').textContent=avg(cycleTimes);
@@ -371,7 +413,7 @@
         const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
         const wonTag = d.won ? '<span class="chip ok">успех</span>' : d.lost ? '<span class="chip warn">отказ</span>' : '';
         tr.innerHTML = `
-          <td colspan="7" class="pl-12">
+          <td colspan="10" class="pl-12">
             <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
               <span class="font-mono font-bold text-indigo-700">#${d.id || '—'}</span>
               <span class="text-gray-700">${d.dealName || 'без названия'}</span>
@@ -405,13 +447,14 @@
         trG.className = `clickable ${groupClass[g]} border-b`;
         const isOpen = abcGroupOpen[g];
         trG.innerHTML = `
-          <td class="px-3 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${groupLabel[g]}</td>
-          <td class="px-3 py-3 font-bold text-gray-800">${clients.length} клиентов</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${tDeals}</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${tClosed}</td>
-          <td class="px-3 py-3 text-right font-bold text-indigo-700">${convFromAll}%</td>
-          <td class="px-3 py-3 text-right font-bold text-green-700">${fmtMoney(tRev)}</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(avgCheck)}</td>`;
+          <td class="px-2 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${groupLabel[g]}</td>
+          <td class="px-2 py-3 font-bold text-gray-800">${clients.length} кли.</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${tDeals}</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${tClosed}</td>
+          <td class="px-2 py-3 text-right font-bold text-indigo-700">${convFromAll}%</td>
+          <td class="px-2 py-3 text-right font-bold text-green-700">${fmtMoney(tRev)}</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${fmtMoney(avgCheck)}</td>
+          <td class="px-2 py-3"></td><td class="px-2 py-3"></td><td class="px-2 py-3"></td>`;
         trG.onclick = () => { abcGroupOpen[g] = !abcGroupOpen[g]; renderABCTable(); };
         tbody.appendChild(trG);
         if (isOpen) {
@@ -427,13 +470,16 @@
             const tr = document.createElement('tr');
             tr.className = 'clickable border-b hover:bg-white/60';
             tr.innerHTML = `
-              <td class="px-3 py-2"><span class="chip ${abcClass}">${c.abc}</span></td>
-              <td class="px-3 py-2 font-medium text-gray-900 pl-8"><span class="expand-icon ${isExp?'open':''}">▶</span>${c.client}</td>
-              <td class="px-3 py-2 text-right text-gray-600">${c.deals}</td>
-              <td class="px-3 py-2 text-right text-gray-600">${c.closedDeals}</td>
-              <td class="px-3 py-2 text-right text-gray-600">${c.conversion}</td>
-              <td class="px-3 py-2 text-right font-bold text-green-700">${fmtMoney(c.revenue)}</td>
-              <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(c.avgCheck)}</td>`;
+              <td class="px-2 py-2"><span class="chip ${abcClass}">${c.abc}</span></td>
+              <td class="px-2 py-2 font-medium text-gray-900 pl-4"><span class="expand-icon ${isExp?'open':''}">▶</span>${c.client}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.deals}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.closedDeals}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.conversion}</td>
+              <td class="px-2 py-2 text-right font-bold text-green-700">${fmtMoney(c.revenue)}</td>
+              <td class="px-2 py-2 text-right text-gray-700">${fmtMoney(c.avgCheck)}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.avgResp}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.avgCyc}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${c.avgGap}</td>`;
             tr.onclick = (e) => { e.stopPropagation(); abcClientOpen[c.client] = !abcClientOpen[c.client]; renderABCTable(); };
             tbody.appendChild(tr);
             if (isExp) renderDealRows(c.dealsList, tbody);
@@ -448,7 +494,7 @@
       const convFromAll = totalLeads>0?((allClosed/totalLeads)*100).toFixed(1):'0.0';
       const avgCheck = allClosed>0?allRev/allClosed:0;
       const tr = document.createElement('tr');tr.className='total-row border-t-2 border-gray-300';
-      tr.innerHTML = `<td class="px-3 py-2 text-gray-700">ИТОГО ВСЕХ ГРУПП</td><td class="px-3 py-2 text-gray-700">${allClients.length} клиентов</td><td class="px-3 py-2 text-right text-gray-700">${allDeals}</td><td class="px-3 py-2 text-right text-gray-700">${allClosed}</td><td class="px-3 py-2 text-right text-indigo-700">${convFromAll}% <span class="text-[10px] text-gray-400 font-normal">(от всех лидов)</span></td><td class="px-3 py-2 text-right text-green-700">${fmtMoney(allRev)}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(avgCheck)}</td>`;
+      tr.innerHTML = `<td class="px-2 py-2 text-gray-700">ИТОГО</td><td class="px-2 py-2 text-gray-700">${allClients.length} кли.</td><td class="px-2 py-2 text-right text-gray-700">${allDeals}</td><td class="px-2 py-2 text-right text-gray-700">${allClosed}</td><td class="px-2 py-2 text-right text-indigo-700">${convFromAll}%</td><td class="px-2 py-2 text-right text-green-700">${fmtMoney(allRev)}</td><td class="px-2 py-2 text-right text-gray-700">${fmtMoney(avgCheck)}</td><td class="px-2 py-2"></td><td class="px-2 py-2"></td><td class="px-2 py-2"></td>`;
       tbody.appendChild(tr);
     }
 
@@ -502,11 +548,45 @@
       corridors.forEach(corridor=>{
         const dealsInCorridor=filteredDeals.filter(d=>d.amount>=corridor.min&&d.amount<corridor.max);
         const clientMap={};
-        dealsInCorridor.forEach(d=>{if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,budget:0,success:0,dealsList:[]};clientMap[d.client].deals+=1;clientMap[d.client].budget+=d.amount;if(d.won)clientMap[d.client].success+=1;clientMap[d.client].dealsList.push(d);});
-        const clients=Object.values(clientMap);
+        dealsInCorridor.forEach(d=>{
+          if(!clientMap[d.client]) clientMap[d.client]={client:d.client, deals:0, budget:0, success:0, dealsList:[], responseTimes:[], cycleTimes:[], dealGaps:[], closedDates:[]};
+          clientMap[d.client].deals+=1;
+          clientMap[d.client].budget+=d.amount;
+          clientMap[d.client].dealsList.push(d);
+          if(d.won) {
+            clientMap[d.client].success+=1;
+            if(d.created && d.closed) {
+              const cycleDays = (d.closed - d.created) / 86400000;
+              if(cycleDays >= 0 && cycleDays < 1000) clientMap[d.client].cycleTimes.push(cycleDays);
+            }
+          }
+          if(d.created && d.changed && d.stage!=='Новый' && d.stage!=='Неразобранное') {
+            const respHours = (d.changed - d.created) / 3600000;
+            if(respHours >= 0 && respHours < 720) clientMap[d.client].responseTimes.push(respHours);
+          }
+          if((d.won||d.lost) && d.closed) {
+            clientMap[d.client].closedDates.push(d.closed);
+          }
+        });
+        
+        Object.values(clientMap).forEach(c => {
+          const dates = c.closedDates.sort((a,b)=>a-b);
+          for(let i=1; i<dates.length; i++) {
+            const gap = (dates[i]-dates[i-1])/86400000;
+            if(gap >= 0) c.dealGaps.push(gap);
+          }
+        });
+
+        const clients = Object.values(clientMap).map(c => {
+          const avgResp = c.responseTimes.length ? (c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1) : 'N/A';
+          const avgCyc = c.cycleTimes.length ? (c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1) : 'N/A';
+          const avgGap = c.dealGaps.length ? (c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1) : 'N/A';
+          return {...c, avgResp, avgCyc, avgGap};
+        });
+
         if(!clients.length){
           const tr = document.createElement('tr'); tr.className='bg-gray-50';
-          tr.innerHTML = `<td class="px-3 py-2 font-semibold text-gray-700" colspan="8">${corridor.name} — нет сделок</td>`;
+          tr.innerHTML = `<td class="px-2 py-2 font-semibold text-gray-700" colspan="10">${corridor.name} — нет сделок</td>`;
           tbody.appendChild(tr); return;
         }
         const tDeals=clients.reduce((s,c)=>s+c.deals,0);
@@ -518,14 +598,14 @@
         const trG = document.createElement('tr');
         trG.className = 'clickable bg-indigo-50 border-b';
         trG.innerHTML = `
-          <td class="px-3 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${corridor.name}</td>
-          <td class="px-3 py-3 font-bold text-gray-800">${clients.length} клиентов</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${tDeals}</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(tBudget)}</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(tLtv)}</td>
-          <td class="px-3 py-3 text-right font-bold text-green-700">${fmtMoney(tLtv)}</td>
-          <td class="px-3 py-3 text-right font-bold text-gray-800">${tSuccess}</td>
-          <td class="px-3 py-3 text-right font-bold text-indigo-700">${tConv}%</td>`;
+          <td class="px-2 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${corridor.name}</td>
+          <td class="px-2 py-3 font-bold text-gray-800">${clients.length} кли.</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${tDeals}</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${fmtMoney(tBudget)}</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${fmtMoney(tLtv)}</td>
+          <td class="px-2 py-3 text-right font-bold text-gray-800">${tSuccess}</td>
+          <td class="px-2 py-3 text-right font-bold text-indigo-700">${tConv}%</td>
+          <td class="px-2 py-3"></td><td class="px-2 py-3"></td><td class="px-2 py-3"></td>`;
         trG.onclick = () => { bcGroupOpen[corridor.name] = !bcGroupOpen[corridor.name]; renderBudgetCorridors(); };
         tbody.appendChild(trG);
         if (isOpen) {
@@ -535,7 +615,17 @@
             const conv=r.deals>0?((r.success/r.deals)*100).toFixed(1)+'%':'0%';
             const isExp = bcClientOpen[r.client];
             const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-white/60';
-            tr.innerHTML=`<td class="px-3 py-2 font-semibold text-gray-700">${idx===0?corridor.name:''}</td><td class="px-3 py-2 font-medium text-gray-900 pl-8"><span class="expand-icon ${isExp?'open':''}">▶</span>${r.client}</td><td class="px-3 py-2 text-right text-gray-600">${r.deals}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.budget)}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(ltv)}</td><td class="px-3 py-2 text-right font-bold text-green-700">${fmtMoney(ltv)}</td><td class="px-3 py-2 text-right text-gray-600">${r.success}</td><td class="px-3 py-2 text-right text-gray-600">${conv}</td>`;
+            tr.innerHTML=`
+              <td class="px-2 py-2 font-semibold text-gray-700">${idx===0?corridor.name:''}</td>
+              <td class="px-2 py-2 font-medium text-gray-900 pl-4"><span class="expand-icon ${isExp?'open':''}">▶</span>${r.client}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${r.deals}</td>
+              <td class="px-2 py-2 text-right text-gray-700">${fmtMoney(r.budget)}</td>
+              <td class="px-2 py-2 text-right text-gray-700">${fmtMoney(ltv)}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${r.success}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${conv}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${r.avgResp}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${r.avgCyc}</td>
+              <td class="px-2 py-2 text-right text-gray-600">${r.avgGap}</td>`;
             tr.onclick = (e) => { e.stopPropagation(); bcClientOpen[r.client] = !bcClientOpen[r.client]; renderBudgetCorridors(); };
             tbody.appendChild(tr);
             if (isExp) renderDealRows(r.dealsList, tbody);
