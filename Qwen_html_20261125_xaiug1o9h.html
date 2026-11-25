@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .funnel-bar { transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .sortable { cursor: pointer; user-select: none; } .sortable:hover { color:#4f46e5; background:#f3f4f6; }
+    .chip { display:inline-block; background:#eef2ff; color:#4338ca; padding:2px 8px; border-radius:6px; font-size:12px; margin:2px; }
+    .chip.warn { background:#fef3c7; color:#92400e; } .chip.ok { background:#d1fae5; color:#065f46; }
+    .chip.a-group { background:#d1fae5; color:#065f46; font-weight:600; }
+    .chip.b-group { background:#dbeafe; color:#1e40af; font-weight:600; }
+    .chip.c-group { background:#fef3c7; color:#92400e; font-weight:600; }
+    .tab-active { background:white; color:#4338ca; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+    .tab-inactive { color:#4b5563; } .tab-inactive:hover { color:#1f2937; }
+    .ms-wrapper { position:relative; }
+    .ms-button { width:100%; min-height:38px; background:white; border:1px solid #e5e7eb; border-radius:8px; padding:6px 30px 6px 10px; font-size:13px; text-align:left; cursor:pointer; display:flex; align-items:center; flex-wrap:wrap; gap:4px; position:relative; }
+    .ms-button:hover { border-color:#a5b4fc; } .ms-button::after { content:'▾'; position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#6b7280; font-size:12px; }
+    .ms-dropdown { position:absolute; top:100%; left:0; right:0; margin-top:4px; background:white; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.1); z-index:100; max-height:280px; display:none; flex-direction:column; }
+    .ms-dropdown.open { display:flex; } .ms-search { padding:8px; border-bottom:1px solid #e5e7eb; }
+    .ms-search input { width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; outline:none; } .ms-search input:focus { border-color:#6366f1; }
+    .ms-options { overflow-y:auto; flex:1; } .ms-option { padding:6px 10px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; }
+    .ms-option:hover { background:#f3f4f6; } .ms-option input { cursor:pointer; }
+    .ms-tag { background:#eef2ff; color:#4338ca; padding:2px 6px; border-radius:4px; font-size:11px; display:inline-flex; align-items:center; gap:4px; }
+    .ms-tag .remove { cursor:pointer; font-weight:bold; color:#6366f1; }
+    .ms-actions { padding:6px 8px; border-top:1px solid #e5e7eb; display:flex; gap:8px; } .ms-actions button { font-size:11px; color:#6366f1; cursor:pointer; background:none; border:none; } .ms-actions button:hover { text-decoration:underline; }
+    .total-row { background:#f8fafc; font-weight:700; }
+    .clickable { cursor: pointer; user-select: none; }
+    .clickable:hover { filter: brightness(0.97); }
+    .expand-icon { display:inline-block; transition: transform 0.15s; margin-right: 6px; font-size: 10px; }
+    .expand-icon.open { transform: rotate(90deg); }
+    .deal-row { background:#fafafa; }
+    .deal-row td { padding: 6px 12px; font-size: 12px; color: #4b5563; }
+    .group-a { background:#ecfdf5; }
+    .group-b { background:#eff6ff; }
+    .group-c { background:#fffbeb; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+  <div class="max-w-[1400px] mx-auto p-4 md:p-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+      <div>
+        <h1 class="text-3xl font-bold text-indigo-700">Decortier CRM Модулятор</h1>
+        <p id="info-line" class="text-xs text-gray-500 mt-1">Загрузка...</p>
+      </div>
+      <div class="flex gap-2 items-center">
+        <button onclick="toggleDiag()" class="text-xs bg-white border border-gray-300 px-3 py-1.5 rounded-full hover:bg-gray-100">🔎 Диагностика</button>
+        <span id="last-updated" class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full"></span>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-sm font-semibold text-gray-700">🎯 Фильтры:</span>
+        <button onclick="resetFilters()" class="text-xs text-indigo-600 hover:underline">Сбросить все</button>
+        <span id="filter-count" class="text-xs text-gray-400 ml-auto"></span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div><label class="text-xs text-gray-500 mb-1 block">Год</label><div class="ms-wrapper" id="ms-year"></div></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">Месяц</label><div class="ms-wrapper" id="ms-month"></div></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">Тип клиента</label><div class="ms-wrapper" id="ms-type"></div></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">Этап сделки</label><div class="ms-wrapper" id="ms-stage"></div></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">Группа Парето</label><div class="ms-wrapper" id="ms-abc"></div></div>
+      </div>
+    </div>
+
+    <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg w-fit mb-6">
+      <button onclick="switchTab('b2b')" id="tab-b2b" class="px-6 py-2 rounded-md font-semibold transition-all tab-active">B2B Воронка</button>
+      <button onclick="switchTab('b2c')" id="tab-b2c" class="px-6 py-2 rounded-md font-semibold transition-all tab-inactive">B2C Воронка</button>
+    </div>
+
+    <div id="diag-block" class="hidden bg-white border border-indigo-200 rounded-xl p-6 mb-6 shadow-sm max-h-[70vh] overflow-y-auto">
+      <h3 class="text-lg font-bold text-indigo-800 mb-3">🔎 Диагностика таблицы</h3>
+      <div id="diag-content" class="text-sm space-y-3"></div>
+    </div>
+
+    <div id="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+      <p class="text-lg text-gray-600">Загрузка данных из Google Sheets...</p>
+    </div>
+
+    <div id="error-block" class="hidden bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-6">
+      <h3 class="text-red-800 font-bold text-lg mb-2">⚠️ Ошибка</h3>
+      <pre id="error-message" class="text-red-700 text-sm whitespace-pre-wrap font-mono bg-red-100 p-3 rounded"></pre>
+    </div>
+
+    <div id="content" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сводка по вкладке <span id="summary-tab" class="text-indigo-600"></span></h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="text-center"><p class="text-xs text-gray-500">Всего лидов</p><p id="sum-leads" class="text-2xl font-bold text-gray-900">-</p></div>
+          <div class="text-center"><p class="text-xs text-gray-500">Выручка всех лидов</p><p id="sum-rev-all" class="text-2xl font-bold text-gray-900">-</p></div>
+          <div class="text-center"><p class="text-xs text-gray-500">Всего успешных сделок</p><p id="sum-success" class="text-2xl font-bold text-green-700">-</p></div>
+          <div class="text-center"><p class="text-xs text-gray-500">Выручка успешных</p><p id="sum-rev-succ" class="text-2xl font-bold text-green-700">-</p></div>
+          <div class="text-center"><p class="text-xs text-gray-500">Конверсия</p><p id="sum-conv" class="text-2xl font-bold text-indigo-700">-</p></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера</p>
+          <p class="text-3xl font-bold text-gray-900"><span id="metric-response">-</span> <span class="text-base font-normal text-gray-500">часов</span></p>
+          <p class="text-xs text-gray-400 mt-1">от обращения до первого действия</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки</p>
+          <p class="text-3xl font-bold text-gray-900"><span id="metric-cycle">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          <p class="text-xs text-gray-400 mt-1">от создания до закрытия (успех/отказ)</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками</p>
+          <p class="text-3xl font-bold text-gray-900"><span id="metric-gap">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          <p class="text-xs text-gray-400 mt-1">у повторных клиентов</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-800">Этапы воронки продаж</h2>
+          <span id="funnel-total" class="text-sm text-gray-500"></span>
+        </div>
+        <div id="funnel-container" class="space-y-3"></div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+          <h2 class="text-xl font-bold text-gray-800">Клиенты по ABC-анализу</h2>
+          <div class="flex gap-2 text-xs flex-wrap"><span class="chip a-group">A — 80% выручки</span><span class="chip b-group">B — 15% выручки</span><span class="chip c-group">C — 5% выручки</span></div>
+        </div>
+        <p class="text-xs text-gray-500 mb-3">💡 Клик по группе → клиенты; клик по клиенту → сделки с ID. По умолчанию всё свёрнуто.</p>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200"><tr>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600">Группа</th>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('name')">Клиент ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('deals')">Сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('closedDeals')">Успешных ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('conversion')">Конверсия ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('revenue')">Выручка ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCheck')">Средний чек ↕</th>
+            </tr></thead>
+            <tbody id="abc-table-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Сделки "В работе"</h2>
+        <p class="text-xs text-gray-500 mb-3">Все сделки, кроме финальных. По умолчанию показано 20 клиентов — кнопка «Показать все» внизу.</p>
+        <div id="inwork-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200"><tr>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('iw_client')">Клиент ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_count')">Сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_budget')">Бюджет сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_avg')">Средний бюджет ↕</th>
+            </tr></thead>
+            <tbody id="inwork-table-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Анализ по бюджетным коридорам</h2>
+        <p class="text-xs text-gray-500 mb-3">💡 Клик по коридору → клиенты; клик по клиенту → сделки с ID. По умолчанию всё свёрнуто.</p>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200"><tr>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600">Коридор</th>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('bc_client')">Клиент ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_total')">Совокупный бюджет ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ клиента ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
+            </tr></thead>
+            <tbody id="bc-table-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // !!! ВАШ URL ВЕБ-ПРИЛОЖЕНИЯ GOOGLE APPS SCRIPT !!!
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqshUC18ghJr50Q6aDLEZ8EenlocgIeH-H9U8j8su1Utkx9sRWmkWjkmo96Ow-YJ8U/exec';
+
+    let RAW_DEALS=[], FILTERS={}, currentTab='b2b', filteredDeals=[], abcData=[];
+    let sortDirection=-1, currentSortKey='revenue';
+    const MONTH_NAMES=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+    const IW_LIMIT = 20;
+
+    let abcGroupOpen = { A:false, B:false, C:false };
+    let abcClientOpen = {};
+    let bcGroupOpen = {};
+    let bcClientOpen = {};
+    let iwClientOpen = {};
+    let iwShowAll = false;
+
+    // ЗАМЕНА google.script.run НА FETCH ДЛЯ ВНЕШНЕГО ХОСТИНГА
+    fetch(APPS_SCRIPT_URL + '?action=getData')
+      .then(response => response.json())
+      .then(function(data) {
+        try {
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          RAW_DEALS = data.deals || []; 
+          FILTERS = data.filters || {};
+          document.getElementById('last-updated').textContent = `Обновлено: ${data.lastUpdated}`;
+          document.getElementById('info-line').textContent = `✅ Лист: "${data.detectedSheet}" · Колонка типа: "${data.detectedTypeColumn}" (индекс ${data.typeColumnIndex}, B2B: ${data.typeMatches}) · Сделок: ${RAW_DEALS.length} · B2B: ${data.b2bTotal} · B2C: ${data.b2cTotal} · Успешных всего: ${data.wonTotal}`;
+          initMultiselects();
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('content').classList.remove('hidden');
+          applyFilters();
+        } catch (e) {
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('error-block').classList.remove('hidden');
+          document.getElementById('error-message').textContent = 'Ошибка загрузки данных: ' + e.message;
+        }
+      })
+      .catch(function(err) {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error-block').classList.remove('hidden');
+        document.getElementById('error-message').textContent = 'Ошибка сети. Проверьте URL или доступ к таблице: ' + err.message;
+      });
+
+    function createMultiselect(containerId, options, labelFn, onChange){
+      const container=document.getElementById(containerId);
+      const state={selected:new Set(),search:''};
+      const button=document.createElement('div');button.className='ms-button';
+      const dropdown=document.createElement('div');dropdown.className='ms-dropdown';
+      const searchBox=document.createElement('div');searchBox.className='ms-search';
+      const searchInput=document.createElement('input');searchInput.placeholder='Поиск...';
+      searchInput.addEventListener('input',e=>{state.search=e.target.value.toLowerCase();renderOptions();});
+      searchBox.appendChild(searchInput);
+      const optionsDiv=document.createElement('div');optionsDiv.className='ms-options';
+      const actions=document.createElement('div');actions.className='ms-actions';
+      const selAll=document.createElement('button');selAll.textContent='Выбрать все';
+      selAll.onclick=e=>{e.stopPropagation();options.forEach(o=>state.selected.add(String(o)));render();onChange();};
+      const clr=document.createElement('button');clr.textContent='Очистить';
+      clr.onclick=e=>{e.stopPropagation();state.selected.clear();render();onChange();};
+      actions.appendChild(selAll);actions.appendChild(clr);
+      dropdown.appendChild(searchBox);dropdown.appendChild(optionsDiv);dropdown.appendChild(actions);
+      container.appendChild(button);container.appendChild(dropdown);
+      function renderOptions(){
+        optionsDiv.innerHTML='';
+        const filtered=options.filter(o=>String(labelFn(o)).toLowerCase().includes(state.search));
+        if(!filtered.length){optionsDiv.innerHTML='<div class="p-3 text-xs text-gray-400">Ничего не найдено</div>';return;}
+        filtered.forEach(o=>{
+          const val=String(o);const opt=document.createElement('div');opt.className='ms-option';
+          const cb=document.createElement('input');cb.type='checkbox';cb.checked=state.selected.has(val);
+          cb.onchange=()=>{if(cb.checked)state.selected.add(val);else state.selected.delete(val);render();onChange();};
+          const lbl=document.createElement('span');lbl.textContent=String(labelFn(o));
+          opt.appendChild(cb);opt.appendChild(lbl);optionsDiv.appendChild(opt);
+        });
+      }
+      function render(){
+        button.innerHTML='';
+        if(state.selected.size===0)button.innerHTML='<span class="text-gray-400">Все значения</span>';
+        else if(state.selected.size<=2){
+          state.selected.forEach(v=>{const t=document.createElement('span');t.className='ms-tag';t.innerHTML=`${v} <span class="remove" data-v="${v}">×</span>`;button.appendChild(t);});
+          button.querySelectorAll('.remove').forEach(el=>el.onclick=e=>{e.stopPropagation();state.selected.delete(el.dataset.v);render();onChange();});
+        }else button.innerHTML=`<span class="ms-tag">Выбрано: ${state.selected.size}</span>`;
+        renderOptions();
+      }
+      button.onclick=e=>{e.stopPropagation();document.querySelectorAll('.ms-dropdown.open').forEach(d=>{if(d!==dropdown)d.classList.remove('open');});dropdown.classList.toggle('open');searchInput.focus();};
+      render();
+      return {getState:()=>state.selected,setState:vals=>{state.selected=new Set(vals);render();}};
+    }
+
+    let msYear,msMonth,msType,msStage,msAbc;
+    function initMultiselects(){
+      msYear=createMultiselect('ms-year',FILTERS.years||[],v=>String(v),applyFilters);
+      msMonth=createMultiselect('ms-month',FILTERS.months||[],v=>MONTH_NAMES[v-1]+' ('+v+')',applyFilters);
+      msType=createMultiselect('ms-type',FILTERS.types||[],v=>String(v),applyFilters);
+      msStage=createMultiselect('ms-stage',FILTERS.stages||[],v=>String(v),applyFilters);
+      msAbc=createMultiselect('ms-abc',['A','B','C'],v=>v==='A'?'A (80% выручки)':v==='B'?'B (15% выручки)':'C (5% выручки)',applyFilters);
+      document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrapper'))document.querySelectorAll('.ms-dropdown.open').forEach(d=>d.classList.remove('open'));});
+    }
+    function resetFilters(){msYear.setState([]);msMonth.setState([]);msType.setState([]);msStage.setState([]);msAbc.setState([]);applyFilters();}
+
+    function resetExpandState(){
+      abcGroupOpen={A:false,B:false,C:false}; abcClientOpen={};
+      bcGroupOpen={}; bcClientOpen={};
+      iwClientOpen={}; iwShowAll=false;
+    }
+
+    function applyFilters(){
+      const years=Array.from(msYear.getState()).map(v=>parseInt(v));
+      const months=Array.from(msMonth.getState()).map(v=>parseInt(v.match(/\((\d+)\)/)?.[1]||v));
+      const types=Array.from(msType.getState());
+      const stages=Array.from(msStage.getState());
+      const abcGroups=Array.from(msAbc.getState());
+      const seg=currentTab==='b2b'?'b2b':'b2c';
+      filteredDeals=RAW_DEALS.filter(d=>{
+        if(d.segment!==seg)return false;
+        if(years.length&&!years.includes(d.year))return false;
+        if(months.length&&!months.includes(d.month))return false;
+        if(types.length&&!types.includes(d.type))return false;
+        if(stages.length&&!stages.includes(d.stage))return false;
+        return true;
+      });
+      const clientMap={};
+      filteredDeals.forEach(d=>{
+        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,closedDates:[],dealsList:[]};
+        clientMap[d.client].deals+=1;
+        clientMap[d.client].dealsList.push(d);
+        if((d.won||d.lost)&&d.closed){clientMap[d.client].closedDates.push(d.closed);}
+        if(d.won){clientMap[d.client].closedDeals+=1;clientMap[d.client].revenue+=d.amount;}
+      });
+      const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenue-a.revenue);
+      const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenue,0);
+      let cum=0;
+      abcData=clientsArr.map(c=>{
+        cum+=c.revenue;const pct=totalRevenue>0?cum/totalRevenue:0;
+        let abc='C';if(pct<=0.80)abc='A';else if(pct<=0.95)abc='B';
+        const avgCheck=c.closedDeals>0?c.revenue/c.closedDeals:0;
+        const conversion=c.deals>0?((c.closedDeals/c.deals)*100).toFixed(1):'0';
+        return {...c,abc,avgCheck,conversion:conversion+'%'};
+      });
+      if(abcGroups.length)abcData=abcData.filter(c=>abcGroups.includes(c.abc));
+      const activeCount=years.length+months.length+types.length+stages.length+abcGroups.length;
+      document.getElementById('filter-count').textContent=activeCount>0?`Активных фильтров: ${activeCount}`:'';
+      resetExpandState();
+      renderAll();
+    }
+    function renderAll(){renderSummary();renderMetrics();renderFunnel();renderABCTable();renderInWork();renderBudgetCorridors();}
+
+    function renderSummary(){
+      const totalLeads=filteredDeals.length;
+      const revAll=filteredDeals.reduce((s,d)=>s+d.amount,0);
+      const successDeals=filteredDeals.filter(d=>d.won);
+      const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
+      const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
+      document.getElementById('summary-tab').textContent=currentTab==='b2b'?'(B2B)':'(B2C)';
+      document.getElementById('sum-leads').textContent=totalLeads;
+      document.getElementById('sum-rev-all').textContent=fmtMoney(revAll);
+      document.getElementById('sum-success').textContent=successDeals.length;
+      document.getElementById('sum-rev-succ').textContent=fmtMoney(revSuccess);
+      document.getElementById('sum-conv').textContent=conv+'%';
+    }
+
+    function renderMetrics(){
+      const responseTimes=[];
+      filteredDeals.forEach(d=>{if(d.created&&d.changed&&d.stage!=='Новый'&&d.stage!=='Неразобранное'){const h=(d.changed-d.created)/3600000;if(h>=0&&h<720)responseTimes.push(h);}});
+      const cycleTimes=[];
+      filteredDeals.forEach(d=>{if(d.created&&d.closed&&(d.won||d.lost)){const dd=(d.closed-d.created)/86400000;if(dd>=0&&dd<1000)cycleTimes.push(dd);}});
+      const clientClosed={};
+      filteredDeals.forEach(d=>{if(d.closed&&(d.won||d.lost)){if(!clientClosed[d.client])clientClosed[d.client]=[];clientClosed[d.client].push(d.closed);}});
+      const gaps=[];
+      Object.values(clientClosed).forEach(dates=>{if(dates.length>=2){dates.sort((a,b)=>a-b);for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)gaps.push(g);}}});
+      const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):'N/A';
+      document.getElementById('metric-response').textContent=avg(responseTimes);
+      document.getElementById('metric-cycle').textContent=avg(cycleTimes);
+      document.getElementById('metric-gap').textContent=avg(gaps);
+    }
+
+    function renderFunnel(){
+      const names=['Лиды','Квалифицированные','Встречи / замеры','Отправленные КП','Подписанные КП','Договоры / аванс','Сделки (закрытые)'];
+      const total=filteredDeals.length;
+      const counts=names.map((_,i)=>i===0?total:filteredDeals.filter(d=>d.funnelIdx>=i).length);
+      document.getElementById('funnel-total').textContent=`Всего лидов: ${total}`;
+      const container=document.getElementById('funnel-container');container.innerHTML='';
+      const maxCount=total||1;
+      counts.forEach((count,i)=>{
+        const widthPercent=(count/maxCount)*100;
+        const prevCount=i===0?total:counts[i-1];
+        const conversion=prevCount>0?((count/prevCount)*100).toFixed(1):'0.0';
+        const totalConversion=total>0?((count/total)*100).toFixed(1):'0.0';
+        container.innerHTML+=`
+          <div class="flex flex-col md:flex-row md:items-center">
+            <div class="w-full md:w-48 text-sm font-semibold text-gray-700 mb-1 md:mb-0">${names[i]}</div>
+            <div class="flex-1 mx-0 md:mx-4"><div class="bg-gray-100 rounded-full h-8 relative overflow-hidden"><div class="bg-indigo-600 h-8 rounded-full funnel-bar flex items-center justify-end pr-3 text-white text-sm font-bold shadow-sm" style="width:${Math.max(widthPercent,2)}%">${count}</div></div></div>
+            <div class="w-full md:w-64 text-xs text-gray-600 text-left md:text-right mt-1 md:mt-0 leading-tight"><div>${i===0?'Всего лидов':'Конверсия с пред. этапа'}: ${i===0?count:conversion+'%'}</div><div class="text-indigo-600 font-bold">Общая конверсия от лидов: ${totalConversion}%</div></div>
+          </div>`;
+      });
+    }
+
+    function renderDealRows(dealsList, tbody) {
+      dealsList.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.className = 'deal-row';
+        const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
+        const wonTag = d.won ? '<span class="chip ok">успех</span>' : d.lost ? '<span class="chip warn">отказ</span>' : '';
+        tr.innerHTML = `
+          <td colspan="7" class="pl-12">
+            <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
+              <span class="font-mono font-bold text-indigo-700">#${d.id || '—'}</span>
+              <span class="text-gray-700">${d.dealName || 'без названия'}</span>
+              <span class="text-gray-500">${fmtMoney(d.amount)}</span>
+              <span class="text-gray-500">[${d.stage}]</span>
+              <span class="text-gray-400">${dateStr}</span>
+              ${wonTag}
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderABCTable(){
+      const tbody=document.getElementById('abc-table-body');tbody.innerHTML='';
+      const groups = { A:[], B:[], C:[] };
+      abcData.forEach(c => { if(groups[c.abc]) groups[c.abc].push(c); });
+      const groupOrder = ['A','B','C'];
+      const groupClass = { A:'group-a', B:'group-b', C:'group-c' };
+      const groupLabel = { A:'A — 80% выручки', B:'B — 15% выручки', C:'C — 5% выручки' };
+
+      groupOrder.forEach(g => {
+        const clients = groups[g];
+        if (!clients.length) return;
+        const tDeals = clients.reduce((s,c)=>s+c.deals,0);
+        const tClosed = clients.reduce((s,c)=>s+c.closedDeals,0);
+        const tRev = clients.reduce((s,c)=>s+c.revenue,0);
+        const totalLeads = filteredDeals.length;
+        const convFromAll = totalLeads>0?((tClosed/totalLeads)*100).toFixed(1):'0.0';
+        const avgCheck = tClosed>0?tRev/tClosed:0;
+
+        const trG = document.createElement('tr');
+        trG.className = `clickable ${groupClass[g]} border-b`;
+        const isOpen = abcGroupOpen[g];
+        trG.innerHTML = `
+          <td class="px-3 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${groupLabel[g]}</td>
+          <td class="px-3 py-3 font-bold text-gray-800">${clients.length} клиентов</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${tDeals}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${tClosed}</td>
+          <td class="px-3 py-3 text-right font-bold text-indigo-700">${convFromAll}%</td>
+          <td class="px-3 py-3 text-right font-bold text-green-700">${fmtMoney(tRev)}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(avgCheck)}</td>`;
+        trG.onclick = () => { abcGroupOpen[g] = !abcGroupOpen[g]; renderABCTable(); };
+        tbody.appendChild(trG);
+
+        if (isOpen) {
+          const sorted = [...clients].sort((a,b)=>{
+            let va=a[currentSortKey],vb=b[currentSortKey];
+            if(typeof va==='string'&&va.includes('%')){va=parseFloat(va);vb=parseFloat(vb);}
+            else{va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
+            if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;
+          });
+          sorted.forEach(c => {
+            const abcClass = c.abc==='A'?'a-group':c.abc==='B'?'b-group':'c-group';
+            const isExp = abcClientOpen[c.client];
+            const tr = document.createElement('tr');
+            tr.className = 'clickable border-b hover:bg-white/60';
+            tr.innerHTML = `
+              <td class="px-3 py-2"><span class="chip ${abcClass}">${c.abc}</span></td>
+              <td class="px-3 py-2 font-medium text-gray-900 pl-8"><span class="expand-icon ${isExp?'open':''}">▶</span>${c.client}</td>
+              <td class="px-3 py-2 text-right text-gray-600">${c.deals}</td>
+              <td class="px-3 py-2 text-right text-gray-600">${c.closedDeals}</td>
+              <td class="px-3 py-2 text-right text-gray-600">${c.conversion}</td>
+              <td class="px-3 py-2 text-right font-bold text-green-700">${fmtMoney(c.revenue)}</td>
+              <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(c.avgCheck)}</td>`;
+            tr.onclick = (e) => { e.stopPropagation(); abcClientOpen[c.client] = !abcClientOpen[c.client]; renderABCTable(); };
+            tbody.appendChild(tr);
+            if (isExp) renderDealRows(c.dealsList, tbody);
+          });
+        }
+      });
+
+      const allClients = abcData;
+      const allDeals = allClients.reduce((s,c)=>s+c.deals,0);
+      const allClosed = allClients.reduce((s,c)=>s+c.closedDeals,0);
+      const allRev = allClients.reduce((s,c)=>s+c.revenue,0);
+      const totalLeads = filteredDeals.length;
+      const convFromAll = totalLeads>0?((allClosed/totalLeads)*100).toFixed(1):'0.0';
+      const avgCheck = allClosed>0?allRev/allClosed:0;
+      const tr = document.createElement('tr');tr.className='total-row border-t-2 border-gray-300';
+      tr.innerHTML = `<td class="px-3 py-2 text-gray-700">ИТОГО ВСЕХ ГРУПП</td><td class="px-3 py-2 text-gray-700">${allClients.length} клиентов</td><td class="px-3 py-2 text-right text-gray-700">${allDeals}</td><td class="px-3 py-2 text-right text-gray-700">${allClosed}</td><td class="px-3 py-2 text-right text-indigo-700">${convFromAll}% <span class="text-[10px] text-gray-400 font-normal">(от всех лидов)</span></td><td class="px-3 py-2 text-right text-green-700">${fmtMoney(allRev)}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(avgCheck)}</td>`;
+      tbody.appendChild(tr);
+    }
+
+    function renderInWork(){
+      const inWorkDeals=filteredDeals.filter(d=>!d.won&&!d.lost);
+      const clientMap={};
+      inWorkDeals.forEach(d=>{if(!clientMap[d.client])clientMap[d.client]={client:d.client,count:0,budget:0,dealsList:[]};clientMap[d.client].count+=1;clientMap[d.client].budget+=d.amount;clientMap[d.client].dealsList.push(d);});
+      const rows=Object.values(clientMap);
+      const totalDeals=rows.reduce((s,r)=>s+r.count,0);
+      const totalBudget=rows.reduce((s,r)=>s+r.budget,0);
+      const avgBudget=totalDeals>0?totalBudget/totalDeals:0;
+      document.getElementById('inwork-summary').innerHTML=`<div class="bg-indigo-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Всего сделок</p><p class="text-2xl font-bold text-indigo-700">${totalDeals}</p></div><div class="bg-green-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Совокупный бюджет</p><p class="text-2xl font-bold text-green-700">${fmtMoney(totalBudget)}</p></div><div class="bg-amber-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Средний бюджет</p><p class="text-2xl font-bold text-amber-700">${fmtMoney(avgBudget)}</p></div>`;
+      const tbody=document.getElementById('inwork-table-body');tbody.innerHTML='';
+      if(!rows.length){tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Нет сделок в работе</td></tr>';return;}
+      const sorted=[...rows].sort((a,b)=>{const key=currentSortKey.replace('iw_','');let va=parseFloat(a[key])||0,vb=parseFloat(b[key])||0;if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;});
+      const toShow = iwShowAll ? sorted : sorted.slice(0, IW_LIMIT);
+      toShow.forEach(r=>{
+        const isExp = iwClientOpen[r.client];
+        const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-indigo-50/30';
+        tr.innerHTML=`<td class="px-3 py-2 font-medium text-gray-900"><span class="expand-icon ${isExp?'open':''}">▶</span>${r.client}</td><td class="px-3 py-2 text-right text-gray-600">${r.count}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.budget)}</td><td class="px-3 py-2 text-right text-gray-600">${fmtMoney(r.budget/r.count)}</td>`;
+        tr.onclick = () => { iwClientOpen[r.client] = !iwClientOpen[r.client]; renderInWork(); };
+        tbody.appendChild(tr);
+        if (isExp) {
+          r.dealsList.forEach(d => {
+            const tr2 = document.createElement('tr'); tr2.className = 'deal-row';
+            const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
+            tr2.innerHTML = `<td colspan="4" class="pl-12"><div class="flex flex-wrap items-center gap-3 py-1 text-xs"><span class="font-mono font-bold text-indigo-700">#${d.id||'—'}</span><span class="text-gray-700">${d.dealName||'без названия'}</span><span class="text-gray-500">${fmtMoney(d.amount)}</span><span class="text-gray-500">[${d.stage}]</span><span class="text-gray-400">${dateStr}</span></div></td>`;
+            tbody.appendChild(tr2);
+          });
+        }
+      });
+      if (!iwShowAll && sorted.length > IW_LIMIT) {
+        const trBtn = document.createElement('tr');
+        trBtn.innerHTML = `<td colspan="4" class="text-center py-3"><button class="text-sm text-indigo-600 hover:underline font-medium" onclick="iwShowAll=true;renderInWork();">Показать все ${sorted.length} клиентов (скрыто ${sorted.length - IW_LIMIT})</button></td>`;
+        tbody.appendChild(trBtn);
+      } else if (iwShowAll && sorted.length > IW_LIMIT) {
+        const trBtn = document.createElement('tr');
+        trBtn.innerHTML = `<td colspan="4" class="text-center py-3"><button class="text-sm text-gray-500 hover:underline" onclick="iwShowAll=false;renderInWork();">Свернуть до 20</button></td>`;
+        tbody.appendChild(trBtn);
+      }
+    }
+
+    function renderBudgetCorridors(){
+      const corridors=[
+        {name:'до 100 тыс',min:0,max:100000},{name:'100 – 500 тыс',min:100000,max:500000},
+        {name:'500 тыс – 1 млн',min:500000,max:1000000},{name:'более 1 млн',min:1000000,max:Infinity}
+      ];
+      const clientTotalLTV={},clientTotalDeals={},clientTotalClosed={};
+      filteredDeals.forEach(d=>{if(!clientTotalLTV[d.client]){clientTotalLTV[d.client]=0;clientTotalDeals[d.client]=0;clientTotalClosed[d.client]=0;}clientTotalDeals[d.client]+=1;if(d.won){clientTotalLTV[d.client]+=d.amount;clientTotalClosed[d.client]+=1;}});
+      const tbody=document.getElementById('bc-table-body');tbody.innerHTML='';
+      corridors.forEach(corridor=>{
+        const dealsInCorridor=filteredDeals.filter(d=>d.amount>=corridor.min&&d.amount<corridor.max);
+        const clientMap={};
+        dealsInCorridor.forEach(d=>{if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,budget:0,success:0,dealsList:[]};clientMap[d.client].deals+=1;clientMap[d.client].budget+=d.amount;if(d.won)clientMap[d.client].success+=1;clientMap[d.client].dealsList.push(d);});
+        const clients=Object.values(clientMap);
+        if(!clients.length){
+          const tr = document.createElement('tr'); tr.className='bg-gray-50';
+          tr.innerHTML = `<td class="px-3 py-2 font-semibold text-gray-700" colspan="8">${corridor.name} — нет сделок</td>`;
+          tbody.appendChild(tr);
+          return;
+        }
+        const tDeals=clients.reduce((s,c)=>s+c.deals,0);
+        const tBudget=clients.reduce((s,c)=>s+c.budget,0);
+        const tSuccess=clients.reduce((s,c)=>s+c.success,0);
+        const tLtv=clients.reduce((s,c)=>s+(clientTotalLTV[c.client]||0),0);
+        const tConv=tDeals>0?((tSuccess/tDeals)*100).toFixed(1):'0.0';
+
+        const isOpen = bcGroupOpen[corridor.name];
+        const trG = document.createElement('tr');
+        trG.className = 'clickable bg-indigo-50 border-b';
+        trG.innerHTML = `
+          <td class="px-3 py-3 font-bold text-gray-800" colspan="1"><span class="expand-icon ${isOpen?'open':''}">▶</span>${corridor.name}</td>
+          <td class="px-3 py-3 font-bold text-gray-800">${clients.length} клиентов</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${tDeals}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(tBudget)}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(tLtv)}</td>
+          <td class="px-3 py-3 text-right font-bold text-green-700">${fmtMoney(tLtv)}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${tSuccess}</td>
+          <td class="px-3 py-3 text-right font-bold text-indigo-700">${tConv}%</td>`;
+        trG.onclick = () => { bcGroupOpen[corridor.name] = !bcGroupOpen[corridor.name]; renderBudgetCorridors(); };
+        tbody.appendChild(trG);
+
+        if (isOpen) {
+          const sorted = [...clients].sort((a,b)=>{const key=currentSortKey.replace('bc_','');let va=parseFloat(a[key])||0,vb=parseFloat(b[key])||0;if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;});
+          sorted.forEach((r,idx)=>{
+            const ltv=clientTotalLTV[r.client]||0;
+            const conv=r.deals>0?((r.success/r.deals)*100).toFixed(1)+'%':'0%';
+            const isExp = bcClientOpen[r.client];
+            const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-white/60';
+            tr.innerHTML=`<td class="px-3 py-2 font-semibold text-gray-700">${idx===0?corridor.name:''}</td><td class="px-3 py-2 font-medium text-gray-900 pl-8"><span class="expand-icon ${isExp?'open':''}">▶</span>${r.client}</td><td class="px-3 py-2 text-right text-gray-600">${r.deals}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.budget)}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(ltv)}</td><td class="px-3 py-2 text-right font-bold text-green-700">${fmtMoney(ltv)}</td><td class="px-3 py-2 text-right text-gray-600">${r.success}</td><td class="px-3 py-2 text-right text-gray-600">${conv}</td>`;
+            tr.onclick = (e) => { e.stopPropagation(); bcClientOpen[r.client] = !bcClientOpen[r.client]; renderBudgetCorridors(); };
+            tbody.appendChild(tr);
+            if (isExp) renderDealRows(r.dealsList, tbody);
+          });
+        }
+      });
+    }
+
+    function sortTable(key){if(currentSortKey===key)sortDirection*=-1;else{currentSortKey=key;sortDirection=-1;}renderAll();}
+    function switchTab(tab){currentTab=tab;const a='px-6 py-2 rounded-md font-semibold transition-all tab-active';const i='px-6 py-2 rounded-md font-semibold transition-all tab-inactive';document.getElementById('tab-b2b').className=tab==='b2b'?a:i;document.getElementById('tab-b2c').className=tab==='b2c'?a:i;applyFilters();}
+    function toggleDiag(){const block=document.getElementById('diag-block');block.classList.toggle('hidden');if(!block.classList.contains('hidden')&&!block.dataset.loaded){block.dataset.loaded='1';document.getElementById('diag-content').innerHTML='<p class="text-gray-500">Анализирую...</p>';
+      fetch(APPS_SCRIPT_URL + '?action=getDiagnostic')
+        .then(response => response.json())
+        .then(function(data) {
+           if(data.error) { document.getElementById('diag-content').innerHTML = '<p class="text-red-600">'+data.error+'</p>'; return; }
+           renderDiagnostic(data);
+        }).catch(e => { document.getElementById('diag-content').innerHTML = '<p class="text-red-600">Ошибка: '+e.message+'</p>'; });
+    }}
+    
+    function renderDiagnostic(d){
+      if(!d.found){document.getElementById('diag-content').innerHTML='<p class="text-red-600">Лист Sheet1 не найден</p>';return;}
+      let html=`<div><b class="text-gray-700">Активный лист:</b> ${d.sheetName} (${d.rowCount} строк)</div>`;
+      html+=`<div class="mt-2"><b class="text-gray-700">Выбранная колонка типа:</b> <span class="chip ok">${d.typeColumnFound.name} (индекс ${d.typeColumnFound.index}, B2B: ${d.typeColumnFound.matches})</span></div>`;
+      html+=`<div class="mt-2"><b class="text-gray-700">Сегменты (выборка):</b> <span class="chip ok">B2B: ${d.b2bCount}</span> <span class="chip">B2C: ${d.b2cCount}</span></div>`;
+      html+=`<div class="mt-4"><b class="text-gray-700 text-base">✅ Успешные по стадиям:</b><p class="text-xs text-gray-500 mb-2">wonStages: Оплачен полностью, Обратная связь, Успешно реализовано</p>`;
+      const wonEntries=Object.entries(d.wonByStage||{}).sort((a,b)=>b[1]-a[1]);
+      html += wonEntries.length ? wonEntries.map(([s,n])=>`<span class="chip ok">${s} ×${n}</span>`).join('') : '<span class="chip warn">нет</span>';
+      html += '</div>';
+      html += `<div class="mt-3"><b class="text-gray-700 text-base">❌ Неуспешные по стадиям:</b><p class="text-xs text-gray-500 mb-2">lostStages: Закрыто и не реализовано</p>`;
+      const lostEntries=Object.entries(d.lostByStage||{}).sort((a,b)=>b[1]-a[1]);
+      html += lostEntries.length ? lostEntries.map(([s,n])=>`<span class="chip warn">${s} ×${n}</span>`).join('') : '<span class="chip warn">нет</span>';
+      html += '</div>';
+      html+=`<div class="mt-4"><b class="text-gray-700 text-base">📋 ВСЕ колонки с B2B-совпадениями:</b>`;
+      html+=d.allTypeColumns.map(c=>`<div class="text-xs mt-1"><span class="chip ${c.index===d.typeColumnFound.index?'ok':''}">#${c.index} ${c.name} → B2B ×${c.matches}</span></div>`).join('');
+      html+='</div>';
+      if(d.typeValues&&d.typeValues.length)html+='<div class="mt-4"><b class="text-gray-700">Значения выбранной колонки:</b><br>'+d.typeValues.map(([v,n])=>`<span class="chip">${v} ×${n}</span>`).join('')+'</div>';
+      if(d.statusValues&&d.statusValues.length)html+='<div class="mt-4"><b class="text-gray-700">Значения "Этап сделки":</b><br>'+d.statusValues.map(([v,n])=>`<span class="chip">${v} ×${n}</span>`).join('')+'</div>';
+      document.getElementById('diag-content').innerHTML=html;
+    }
+    function fmtMoney(n){if(!n&&n!==0)return '0 ₽';return new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(n);}
+  </script>
+</body>
+</html>
