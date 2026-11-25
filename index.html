@@ -185,7 +185,6 @@
         </div>
       </div>
 
-      <!-- НОВЫЙ БЛОК: ЗАКРЫТЫЕ ПО ПРИЧИНАМ -->
       <div class="bg-white p-6 rounded-xl shadow-sm border border-red-100">
         <h2 class="text-xl font-bold text-red-800 mb-1">🚫 Закрытые сделки по причинам</h2>
         <p class="text-xs text-gray-500 mb-3">Все отказы («Закрыто и не реализовано»). Клик по причине → клиенты; клик по клиенту → сделки с ID.</p>
@@ -209,12 +208,25 @@
   <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGVYV8t0jRsoc3y8NqxK20dFUB2YR6F8ZjQ5OZJtfhCoyo7r8eNKi93cc6hY4w9c0i/exec';
 
-    // ===== ХЕЛПЕРЫ СТАДИЙ (режут причину из скобок) =====
     const WON_STAGES=['Оплачен полностью','Обратная связь','Успешно реализовано'];
     const LOST_STAGES=['Закрыто и не реализовано'];
     const FUNNEL_MAP={'Неразобранное':0,'Новый':0,'В работе':0,'Квалифицирован':1,'Встреча назначена':2,'Встреча проведена':2,'ТЗ на просчет получено':3,'КП отправлено':3,'счет/договор отправлен':4,'Заказ (Предоплата) в работе':5,'Оплачен полностью':6,'Обратная связь':6,'Успешно реализовано':6};
-    function baseStage(d){ return String(d.stage||'').split('[')[0].trim(); }
-    function reasonOf(d){ const m=String(d.stage||'').match(/\[([^\]]+)\]/); return m?m[1].trim():''; }
+
+    // ИСПРАВЛЕНО: режет и по круглым, и по квадратным скобкам
+    function baseStage(d){
+      const s = String(d.stage||'');
+      const m = s.match(/^([^\[(]+)/);
+      return m ? m[1].trim() : s.trim();
+    }
+    // ИСПРАВЛЕНО: ищет причину в круглых скобках (AmoCRM), затем в квадратных
+    function reasonOf(d){
+      const s = String(d.stage||'');
+      const round = s.match(/\(([^)]+)\)/);
+      if(round) return round[1].trim();
+      const square = s.match(/\[([^\]]+)\]/);
+      if(square) return square[1].trim();
+      return '';
+    }
     function isWon(d){ return WON_STAGES.includes(baseStage(d)); }
     function isLost(d){ return LOST_STAGES.includes(baseStage(d)); }
     function funnelIdxOf(d){ const b=baseStage(d); return FUNNEL_MAP[b]!==undefined?FUNNEL_MAP[b]:-1; }
@@ -413,7 +425,8 @@
         const tr = document.createElement('tr');
         tr.className = 'deal-row';
         const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
-        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reasonOf(d)||'без причины'}</span>` : '';
+        const reason = reasonOf(d);
+        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reason||'без причины'}</span>` : '';
         tr.innerHTML = `
           <td colspan="${colspan}" class="pl-12">
             <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
@@ -621,7 +634,6 @@
       });
     }
 
-    // ===== ЗАКРЫТЫЕ СДЕЛКИ ПО ПРИЧИНАМ =====
     function renderClosed(){
       const closedDeals=filteredDeals.filter(isLost);
       const total=closedDeals.length;
