@@ -9,6 +9,7 @@
     .sortable { cursor: pointer; user-select: none; } .sortable:hover { color:#4f46e5; background:#f3f4f6; }
     .chip { display:inline-block; background:#eef2ff; color:#4338ca; padding:2px 8px; border-radius:6px; font-size:12px; margin:2px; }
     .chip.warn { background:#fef3c7; color:#92400e; } .chip.ok { background:#d1fae5; color:#065f46; }
+    .chip.err { background:#fee2e2; color:#991b1b; }
     .chip.a-group { background:#d1fae5; color:#065f46; font-weight:600; }
     .chip.b-group { background:#dbeafe; color:#1e40af; font-weight:600; }
     .chip.c-group { background:#fef3c7; color:#92400e; font-weight:600; }
@@ -33,6 +34,7 @@
     .deal-row { background:#fafafa; }
     .deal-row td { padding: 6px 12px; font-size: 12px; color: #4b5563; }
     .group-a { background:#ecfdf5; } .group-b { background:#eff6ff; } .group-c { background:#fffbeb; }
+    .group-err { background:#fef2f2; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -97,15 +99,15 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера (общая)</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-response">-</span> <span class="text-base font-normal text-gray-500">часов</span></p>
         </div>
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки (общий)</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-cycle">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
         </div>
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками (общий)</p>
+          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками</p>
           <p class="text-3xl font-bold text-gray-900"><span id="metric-gap">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
         </div>
       </div>
@@ -123,7 +125,7 @@
           <h2 class="text-xl font-bold text-gray-800">Клиенты по ABC-анализу</h2>
           <div class="flex gap-2 text-xs flex-wrap"><span class="chip a-group">A — 80% выручки</span><span class="chip b-group">B — 15% выручки</span><span class="chip c-group">C — 5% выручки</span></div>
         </div>
-        <p class="text-xs text-gray-500 mb-3">💡 Клик по группе → клиенты; клик по клиенту → сделки с ID. По умолчанию всё свёрнуто.</p>
+        <p class="text-xs text-gray-500 mb-3">💡 Клик по группе → клиенты; клик по клиенту → сделки с ID.</p>
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200"><tr>
@@ -145,7 +147,7 @@
 
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Сделки "В работе"</h2>
-        <p class="text-xs text-gray-500 mb-3">Все сделки, кроме финальных. По умолчанию показано 20 клиентов — кнопка «Показать все» внизу.</p>
+        <p class="text-xs text-gray-500 mb-3">Активные сделки без финальных стадий (успех/отказ). По умолчанию 20 клиентов — кнопка «Показать все».</p>
         <div id="inwork-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
@@ -162,7 +164,7 @@
 
       <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Анализ по бюджетным коридорам</h2>
-        <p class="text-xs text-gray-500 mb-3">💡 Клик по коридору → клиенты; клик по клиенту → сделки с ID. По умолчанию всё свёрнуто.</p>
+        <p class="text-xs text-gray-500 mb-3">💡 Клик по коридору → клиенты; клик по клиенту → сделки с ID.</p>
         <div class="overflow-x-auto">
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200"><tr>
@@ -173,11 +175,31 @@
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ ↕</th>
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
+              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCheck')">Ср. чек ↕</th>
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgResp')">Ответ (ч) ↕</th>
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCyc')">Цикл (дн) ↕</th>
               <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgGap')">Между сделками (дн) ↕</th>
             </tr></thead>
             <tbody id="bc-table-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- НОВЫЙ БЛОК: ЗАКРЫТЫЕ ПО ПРИЧИНАМ -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-red-100">
+        <h2 class="text-xl font-bold text-red-800 mb-1">🚫 Закрытые сделки по причинам</h2>
+        <p class="text-xs text-gray-500 mb-3">Все отказы («Закрыто и не реализовано»). Клик по причине → клиенты; клик по клиенту → сделки с ID.</p>
+        <div id="closed-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-red-50 border-b border-red-200"><tr>
+              <th class="px-3 py-2 text-left font-semibold text-red-900">Причина закрытия</th>
+              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_clients')">Клиентов ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_deals')">Сделок ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_budget')">Бюджет ↕</th>
+              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_share')">Доля отказов ↕</th>
+            </tr></thead>
+            <tbody id="closed-table-body" class="divide-y divide-gray-100"></tbody>
           </table>
         </div>
       </div>
@@ -187,12 +209,23 @@
   <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGVYV8t0jRsoc3y8NqxK20dFUB2YR6F8ZjQ5OZJtfhCoyo7r8eNKi93cc6hY4w9c0i/exec';
 
+    // ===== ХЕЛПЕРЫ СТАДИЙ (режут причину из скобок) =====
+    const WON_STAGES=['Оплачен полностью','Обратная связь','Успешно реализовано'];
+    const LOST_STAGES=['Закрыто и не реализовано'];
+    const FUNNEL_MAP={'Неразобранное':0,'Новый':0,'В работе':0,'Квалифицирован':1,'Встреча назначена':2,'Встреча проведена':2,'ТЗ на просчет получено':3,'КП отправлено':3,'счет/договор отправлен':4,'Заказ (Предоплата) в работе':5,'Оплачен полностью':6,'Обратная связь':6,'Успешно реализовано':6};
+    function baseStage(d){ return String(d.stage||'').split('[')[0].trim(); }
+    function reasonOf(d){ const m=String(d.stage||'').match(/\[([^\]]+)\]/); return m?m[1].trim():''; }
+    function isWon(d){ return WON_STAGES.includes(baseStage(d)); }
+    function isLost(d){ return LOST_STAGES.includes(baseStage(d)); }
+    function funnelIdxOf(d){ const b=baseStage(d); return FUNNEL_MAP[b]!==undefined?FUNNEL_MAP[b]:-1; }
+
     let RAW_DEALS=[], FILTERS={}, currentTab='b2b', filteredDeals=[], abcData=[];
     let sortDirection=-1, currentSortKey='revenue';
     const MONTH_NAMES=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
-    const IW_LIMIT = 20;
-    let abcGroupOpen = { A:false, B:false, C:false };
-    let abcClientOpen = {}; let bcGroupOpen = {}; let bcClientOpen = {}; let iwClientOpen = {}; let iwShowAll = false;
+    const IW_LIMIT=20, CL_LIMIT=20;
+    let abcGroupOpen={A:false,B:false,C:false};
+    let abcClientOpen={}, bcGroupOpen={}, bcClientOpen={}, iwClientOpen={}, iwShowAll=false;
+    let clReasonOpen={}, clClientOpen={}, clShowAll=false;
 
     fetch(APPS_SCRIPT_URL + '?action=getData')
       .then(r => r.json())
@@ -201,7 +234,7 @@
           if (data.error) throw new Error(data.error);
           RAW_DEALS = data.deals || []; FILTERS = data.filters || {};
           document.getElementById('last-updated').textContent = `Обновлено: ${data.lastUpdated}`;
-          document.getElementById('info-line').textContent = `✅ Лист: "${data.detectedSheet}" · Колонка типа: "${data.detectedTypeColumn}" (индекс ${data.typeColumnIndex}, B2B: ${data.typeMatches}) · Сделок: ${RAW_DEALS.length} · B2B: ${data.b2bTotal} · B2C: ${data.b2cTotal} · Успешных всего: ${data.wonTotal}`;
+          document.getElementById('info-line').textContent = `✅ Лист: "${data.detectedSheet}" · Колонка типа: "${data.detectedTypeColumn}" (B2B: ${data.typeMatches}) · Сделок: ${RAW_DEALS.length} · Годы: ${FILTERS.years.join(', ')}`;
           initMultiselects();
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('content').classList.remove('hidden');
@@ -272,7 +305,7 @@
       document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrapper'))document.querySelectorAll('.ms-dropdown.open').forEach(d=>d.classList.remove('open'));});
     }
     function resetFilters(){msYear.setState([]);msMonth.setState([]);msType.setState([]);msStage.setState([]);msAbc.setState([]);applyFilters();}
-    function resetExpandState(){abcGroupOpen={A:false,B:false,C:false};abcClientOpen={};bcGroupOpen={};bcClientOpen={};iwClientOpen={};iwShowAll=false;}
+    function resetExpandState(){abcGroupOpen={A:false,B:false,C:false};abcClientOpen={};bcGroupOpen={};bcClientOpen={};iwClientOpen={};iwShowAll=false;clReasonOpen={};clClientOpen={};clShowAll=false;}
 
     function applyFilters(){
       const years=Array.from(msYear.getState()).map(v=>parseInt(v));
@@ -286,68 +319,50 @@
         if(years.length&&!years.includes(d.year))return false;
         if(months.length&&!months.includes(d.month))return false;
         if(types.length&&!types.includes(d.type))return false;
-        if(stages.length&&!stages.includes(d.stage))return false;
+        if(stages.length&&!stages.includes(baseStage(d)))return false;
         return true;
       });
-      
       const clientMap={};
       filteredDeals.forEach(d=>{
-        if(!clientMap[d.client]) clientMap[d.client]={client:d.client, deals:0, closedDeals:0, revenue:0, closedDates:[], dealsList:[], responseTimes:[], cycleTimes:[], dealGaps:[]};
+        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,closedDates:[],dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[]};
         clientMap[d.client].deals+=1;
         clientMap[d.client].dealsList.push(d);
-        
-        if((d.won||d.lost) && d.closed) {
+        if((isWon(d)||isLost(d))&&d.closed){
           clientMap[d.client].closedDates.push(d.closed);
-          if(d.created) {
-            const cycleDays = (d.closed - d.created) / 86400000;
-            if(cycleDays >= 0 && cycleDays < 1000) clientMap[d.client].cycleTimes.push(cycleDays);
-          }
+          if(d.created){const cy=(d.closed-d.created)/86400000;if(cy>=0&&cy<1000)clientMap[d.client].cycleTimes.push(cy);}
         }
-        if(d.won) {
-          clientMap[d.client].closedDeals+=1;
-          clientMap[d.client].revenue+=d.amount;
-        }
-        if(d.created && d.changed && d.stage!=='Новый' && d.stage!=='Неразобранное') {
-          const respHours = (d.changed - d.created) / 3600000;
-          if(respHours >= 0 && respHours < 720) clientMap[d.client].responseTimes.push(respHours);
-        }
+        if(isWon(d)){clientMap[d.client].closedDeals+=1;clientMap[d.client].revenue+=d.amount;}
+        if(d.created&&d.changed&&baseStage(d)!=='Новый'&&baseStage(d)!=='Неразобранное'){const h=(d.changed-d.created)/3600000;if(h>=0&&h<720)clientMap[d.client].responseTimes.push(h);}
       });
-
-      Object.values(clientMap).forEach(c => {
-        const dates = c.closedDates.sort((a,b)=>a-b);
-        for(let i=1; i<dates.length; i++) {
-          const gap = (dates[i]-dates[i-1])/86400000;
-          if(gap >= 0) c.dealGaps.push(gap);
-        }
+      Object.values(clientMap).forEach(c=>{
+        const dates=c.closedDates.sort((a,b)=>a-b);
+        for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)c.dealGaps.push(g);}
       });
-
       const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenue-a.revenue);
       const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenue,0);
       let cum=0;
       abcData=clientsArr.map(c=>{
-        cum+=c.revenue; const pct=totalRevenue>0?cum/totalRevenue:0;
-        let abc='C'; if(pct<=0.80)abc='A'; else if(pct<=0.95)abc='B';
-        const avgCheck=c.closedDeals>0 ? c.revenue/c.closedDeals : 0;
-        const conversion=c.deals>0 ? ((c.closedDeals/c.deals)*100).toFixed(1) : '0';
-        const avgResp = c.responseTimes.length ? (c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1) : 'N/A';
-        const avgCyc = c.cycleTimes.length ? (c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1) : 'N/A';
-        const avgGap = c.dealGaps.length ? (c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1) : 'N/A';
-        return {...c, abc, avgCheck, conversion: conversion+'%', avgResp, avgCyc, avgGap};
+        cum+=c.revenue;const pct=totalRevenue>0?cum/totalRevenue:0;
+        let abc='C';if(pct<=0.80)abc='A';else if(pct<=0.95)abc='B';
+        const avgCheck=c.closedDeals>0?c.revenue/c.closedDeals:0;
+        const conversion=c.deals>0?((c.closedDeals/c.deals)*100).toFixed(1):'0';
+        const avgResp=c.responseTimes.length?(c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1):'N/A';
+        const avgCyc=c.cycleTimes.length?(c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1):'N/A';
+        const avgGap=c.dealGaps.length?(c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1):'N/A';
+        return {...c,abc,avgCheck,conversion:conversion+'%',avgResp,avgCyc,avgGap};
       });
-      
-      if(abcGroups.length) abcData=abcData.filter(c=>abcGroups.includes(c.abc));
+      if(abcGroups.length)abcData=abcData.filter(c=>abcGroups.includes(c.abc));
       const activeCount=years.length+months.length+types.length+stages.length+abcGroups.length;
       document.getElementById('filter-count').textContent=activeCount>0?`Активных фильтров: ${activeCount}`:'';
       resetExpandState();
       renderAll();
     }
-    
-    function renderAll(){renderSummary();renderMetrics();renderFunnel();renderABCTable();renderInWork();renderBudgetCorridors();}
+    function renderAll(){renderSummary();renderMetrics();renderFunnel();renderABCTable();renderInWork();renderBudgetCorridors();renderClosed();}
 
     function renderSummary(){
       const totalLeads=filteredDeals.length;
       const revAll=filteredDeals.reduce((s,d)=>s+d.amount,0);
-      const successDeals=filteredDeals.filter(d=>d.won);
+      const successDeals=filteredDeals.filter(isWon);
       const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
       const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
       document.getElementById('summary-tab').textContent=currentTab==='b2b'?'(B2B)':'(B2C)';
@@ -359,26 +374,13 @@
     }
 
     function renderMetrics(){
-      const responseTimes=[], cycleTimes=[], gaps=[];
+      const responseTimes=[],cycleTimes=[],gaps=[];
       const clientClosed={};
       filteredDeals.forEach(d=>{
-        if(d.created&&d.changed&&d.stage!=='Новый'&&d.stage!=='Неразобранное'){
-          const h=(d.changed-d.created)/3600000; if(h>=0&&h<720) responseTimes.push(h);
-        }
-        if(d.created&&d.closed&&(d.won||d.lost)){
-          const dd=(d.closed-d.created)/86400000; if(dd>=0&&dd<1000) cycleTimes.push(dd);
-          if(!clientClosed[d.client]) clientClosed[d.client]=[];
-          clientClosed[d.client].push(d.closed);
-        }
+        if(d.created&&d.changed&&baseStage(d)!=='Новый'&&baseStage(d)!=='Неразобранное'){const h=(d.changed-d.created)/3600000;if(h>=0&&h<720)responseTimes.push(h);}
+        if(d.created&&d.closed&&(isWon(d)||isLost(d))){const dd=(d.closed-d.created)/86400000;if(dd>=0&&dd<1000)cycleTimes.push(dd);if(!clientClosed[d.client])clientClosed[d.client]=[];clientClosed[d.client].push(d.closed);}
       });
-      Object.values(clientClosed).forEach(dates=>{
-        if(dates.length>=2){
-          dates.sort((a,b)=>a-b);
-          for(let i=1;i<dates.length;i++){
-            const g=(dates[i]-dates[i-1])/86400000; if(g>=0) gaps.push(g);
-          }
-        }
-      });
+      Object.values(clientClosed).forEach(dates=>{if(dates.length>=2){dates.sort((a,b)=>a-b);for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)gaps.push(g);}}});
       const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1):'N/A';
       document.getElementById('metric-response').textContent=avg(responseTimes);
       document.getElementById('metric-cycle').textContent=avg(cycleTimes);
@@ -388,7 +390,7 @@
     function renderFunnel(){
       const names=['Лиды','Квалифицированные','Встречи / замеры','Отправленные КП','Подписанные КП','Договоры / аванс','Сделки (закрытые)'];
       const total=filteredDeals.length;
-      const counts=names.map((_,i)=>i===0?total:filteredDeals.filter(d=>d.funnelIdx>=i).length);
+      const counts=names.map((_,i)=>i===0?total:filteredDeals.filter(d=>funnelIdxOf(d)>=i).length);
       document.getElementById('funnel-total').textContent=`Всего лидов: ${total}`;
       const container=document.getElementById('funnel-container');container.innerHTML='';
       const maxCount=total||1;
@@ -406,21 +408,21 @@
       });
     }
 
-    function renderDealRows(dealsList, tbody) {
+    function renderDealRows(dealsList, tbody, colspan) {
       dealsList.forEach(d => {
         const tr = document.createElement('tr');
         tr.className = 'deal-row';
         const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
-        const wonTag = d.won ? '<span class="chip ok">успех</span>' : d.lost ? '<span class="chip warn">отказ</span>' : '';
+        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reasonOf(d)||'без причины'}</span>` : '';
         tr.innerHTML = `
-          <td colspan="10" class="pl-12">
+          <td colspan="${colspan}" class="pl-12">
             <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
               <span class="font-mono font-bold text-indigo-700">#${d.id || '—'}</span>
               <span class="text-gray-700">${d.dealName || 'без названия'}</span>
               <span class="text-gray-500">${fmtMoney(d.amount)}</span>
-              <span class="text-gray-500">[${d.stage}]</span>
+              <span class="text-gray-500">[${baseStage(d)}]</span>
               <span class="text-gray-400">${dateStr}</span>
-              ${wonTag}
+              ${tag}
             </div>
           </td>`;
         tbody.appendChild(tr);
@@ -429,24 +431,24 @@
 
     function renderABCTable(){
       const tbody=document.getElementById('abc-table-body');tbody.innerHTML='';
-      const groups = { A:[], B:[], C:[] };
-      abcData.forEach(c => { if(groups[c.abc]) groups[c.abc].push(c); });
-      const groupOrder = ['A','B','C'];
-      const groupClass = { A:'group-a', B:'group-b', C:'group-c' };
-      const groupLabel = { A:'A — 80% выручки', B:'B — 15% выручки', C:'C — 5% выручки' };
-      groupOrder.forEach(g => {
-        const clients = groups[g];
-        if (!clients.length) return;
-        const tDeals = clients.reduce((s,c)=>s+c.deals,0);
-        const tClosed = clients.reduce((s,c)=>s+c.closedDeals,0);
-        const tRev = clients.reduce((s,c)=>s+c.revenue,0);
-        const totalLeads = filteredDeals.length;
-        const convFromAll = totalLeads>0?((tClosed/totalLeads)*100).toFixed(1):'0.0';
-        const avgCheck = tClosed>0?tRev/tClosed:0;
-        const trG = document.createElement('tr');
-        trG.className = `clickable ${groupClass[g]} border-b`;
-        const isOpen = abcGroupOpen[g];
-        trG.innerHTML = `
+      const groups={A:[],B:[],C:[]};
+      abcData.forEach(c=>{if(groups[c.abc])groups[c.abc].push(c);});
+      const groupOrder=['A','B','C'];
+      const groupClass={A:'group-a',B:'group-b',C:'group-c'};
+      const groupLabel={A:'A — 80% выручки',B:'B — 15% выручки',C:'C — 5% выручки'};
+      groupOrder.forEach(g=>{
+        const clients=groups[g];
+        if(!clients.length)return;
+        const tDeals=clients.reduce((s,c)=>s+c.deals,0);
+        const tClosed=clients.reduce((s,c)=>s+c.closedDeals,0);
+        const tRev=clients.reduce((s,c)=>s+c.revenue,0);
+        const totalLeads=filteredDeals.length;
+        const convFromAll=totalLeads>0?((tClosed/totalLeads)*100).toFixed(1):'0.0';
+        const avgCheck=tClosed>0?tRev/tClosed:0;
+        const trG=document.createElement('tr');
+        trG.className=`clickable ${groupClass[g]} border-b`;
+        const isOpen=abcGroupOpen[g];
+        trG.innerHTML=`
           <td class="px-2 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${groupLabel[g]}</td>
           <td class="px-2 py-3 font-bold text-gray-800">${clients.length} кли.</td>
           <td class="px-2 py-3 text-right font-bold text-gray-800">${tDeals}</td>
@@ -455,21 +457,21 @@
           <td class="px-2 py-3 text-right font-bold text-green-700">${fmtMoney(tRev)}</td>
           <td class="px-2 py-3 text-right font-bold text-gray-800">${fmtMoney(avgCheck)}</td>
           <td class="px-2 py-3"></td><td class="px-2 py-3"></td><td class="px-2 py-3"></td>`;
-        trG.onclick = () => { abcGroupOpen[g] = !abcGroupOpen[g]; renderABCTable(); };
+        trG.onclick=()=>{abcGroupOpen[g]=!abcGroupOpen[g];renderABCTable();};
         tbody.appendChild(trG);
-        if (isOpen) {
-          const sorted = [...clients].sort((a,b)=>{
+        if(isOpen){
+          const sorted=[...clients].sort((a,b)=>{
             let va=a[currentSortKey],vb=b[currentSortKey];
             if(typeof va==='string'&&va.includes('%')){va=parseFloat(va);vb=parseFloat(vb);}
             else{va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
             if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;
           });
-          sorted.forEach(c => {
-            const abcClass = c.abc==='A'?'a-group':c.abc==='B'?'b-group':'c-group';
-            const isExp = abcClientOpen[c.client];
-            const tr = document.createElement('tr');
-            tr.className = 'clickable border-b hover:bg-white/60';
-            tr.innerHTML = `
+          sorted.forEach(c=>{
+            const abcClass=c.abc==='A'?'a-group':c.abc==='B'?'b-group':'c-group';
+            const isExp=abcClientOpen[c.client];
+            const tr=document.createElement('tr');
+            tr.className='clickable border-b hover:bg-white/60';
+            tr.innerHTML=`
               <td class="px-2 py-2"><span class="chip ${abcClass}">${c.abc}</span></td>
               <td class="px-2 py-2 font-medium text-gray-900 pl-4"><span class="expand-icon ${isExp?'open':''}">▶</span>${c.client}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.deals}</td>
@@ -480,26 +482,26 @@
               <td class="px-2 py-2 text-right text-gray-600">${c.avgResp}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.avgCyc}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.avgGap}</td>`;
-            tr.onclick = (e) => { e.stopPropagation(); abcClientOpen[c.client] = !abcClientOpen[c.client]; renderABCTable(); };
+            tr.onclick=(e)=>{e.stopPropagation();abcClientOpen[c.client]=!abcClientOpen[c.client];renderABCTable();};
             tbody.appendChild(tr);
-            if (isExp) renderDealRows(c.dealsList, tbody);
+            if(isExp)renderDealRows(c.dealsList,tbody,10);
           });
         }
       });
-      const allClients = abcData;
-      const allDeals = allClients.reduce((s,c)=>s+c.deals,0);
-      const allClosed = allClients.reduce((s,c)=>s+c.closedDeals,0);
-      const allRev = allClients.reduce((s,c)=>s+c.revenue,0);
-      const totalLeads = filteredDeals.length;
-      const convFromAll = totalLeads>0?((allClosed/totalLeads)*100).toFixed(1):'0.0';
-      const avgCheck = allClosed>0?allRev/allClosed:0;
-      const tr = document.createElement('tr');tr.className='total-row border-t-2 border-gray-300';
-      tr.innerHTML = `<td class="px-2 py-2 text-gray-700">ИТОГО</td><td class="px-2 py-2 text-gray-700">${allClients.length} кли.</td><td class="px-2 py-2 text-right text-gray-700">${allDeals}</td><td class="px-2 py-2 text-right text-gray-700">${allClosed}</td><td class="px-2 py-2 text-right text-indigo-700">${convFromAll}%</td><td class="px-2 py-2 text-right text-green-700">${fmtMoney(allRev)}</td><td class="px-2 py-2 text-right text-gray-700">${fmtMoney(avgCheck)}</td><td class="px-2 py-2"></td><td class="px-2 py-2"></td><td class="px-2 py-2"></td>`;
+      const allClients=abcData;
+      const allDeals=allClients.reduce((s,c)=>s+c.deals,0);
+      const allClosed=allClients.reduce((s,c)=>s+c.closedDeals,0);
+      const allRev=allClients.reduce((s,c)=>s+c.revenue,0);
+      const totalLeads=filteredDeals.length;
+      const convFromAll=totalLeads>0?((allClosed/totalLeads)*100).toFixed(1):'0.0';
+      const avgCheck=allClosed>0?allRev/allClosed:0;
+      const tr=document.createElement('tr');tr.className='total-row border-t-2 border-gray-300';
+      tr.innerHTML=`<td class="px-2 py-2 text-gray-700">ИТОГО</td><td class="px-2 py-2 text-gray-700">${allClients.length} кли.</td><td class="px-2 py-2 text-right text-gray-700">${allDeals}</td><td class="px-2 py-2 text-right text-gray-700">${allClosed}</td><td class="px-2 py-2 text-right text-indigo-700">${convFromAll}%</td><td class="px-2 py-2 text-right text-green-700">${fmtMoney(allRev)}</td><td class="px-2 py-2 text-right text-gray-700">${fmtMoney(avgCheck)}</td><td class="px-2 py-2"></td><td class="px-2 py-2"></td><td class="px-2 py-2"></td>`;
       tbody.appendChild(tr);
     }
 
     function renderInWork(){
-      const inWorkDeals=filteredDeals.filter(d=>!d.won&&!d.lost);
+      const inWorkDeals=filteredDeals.filter(d=>!isWon(d)&&!isLost(d));
       const clientMap={};
       inWorkDeals.forEach(d=>{if(!clientMap[d.client])clientMap[d.client]={client:d.client,count:0,budget:0,dealsList:[]};clientMap[d.client].count+=1;clientMap[d.client].budget+=d.amount;clientMap[d.client].dealsList.push(d);});
       const rows=Object.values(clientMap);
@@ -510,29 +512,22 @@
       const tbody=document.getElementById('inwork-table-body');tbody.innerHTML='';
       if(!rows.length){tbody.innerHTML='<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">Нет сделок в работе</td></tr>';return;}
       const sorted=[...rows].sort((a,b)=>{const key=currentSortKey.replace('iw_','');let va=parseFloat(a[key])||0,vb=parseFloat(b[key])||0;if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;});
-      const toShow = iwShowAll ? sorted : sorted.slice(0, IW_LIMIT);
+      const toShow=iwShowAll?sorted:sorted.slice(0,IW_LIMIT);
       toShow.forEach(r=>{
-        const isExp = iwClientOpen[r.client];
+        const isExp=iwClientOpen[r.client];
         const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-indigo-50/30';
         tr.innerHTML=`<td class="px-3 py-2 font-medium text-gray-900"><span class="expand-icon ${isExp?'open':''}">▶</span>${r.client}</td><td class="px-3 py-2 text-right text-gray-600">${r.count}</td><td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.budget)}</td><td class="px-3 py-2 text-right text-gray-600">${fmtMoney(r.budget/r.count)}</td>`;
-        tr.onclick = () => { iwClientOpen[r.client] = !iwClientOpen[r.client]; renderInWork(); };
+        tr.onclick=()=>{iwClientOpen[r.client]=!iwClientOpen[r.client];renderInWork();};
         tbody.appendChild(tr);
-        if (isExp) {
-          r.dealsList.forEach(d => {
-            const tr2 = document.createElement('tr'); tr2.className = 'deal-row';
-            const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
-            tr2.innerHTML = `<td colspan="4" class="pl-12"><div class="flex flex-wrap items-center gap-3 py-1 text-xs"><span class="font-mono font-bold text-indigo-700">#${d.id||'—'}</span><span class="text-gray-700">${d.dealName||'без названия'}</span><span class="text-gray-500">${fmtMoney(d.amount)}</span><span class="text-gray-500">[${d.stage}]</span><span class="text-gray-400">${dateStr}</span></div></td>`;
-            tbody.appendChild(tr2);
-          });
-        }
+        if(isExp)renderDealRows(r.dealsList,tbody,4);
       });
-      if (!iwShowAll && sorted.length > IW_LIMIT) {
-        const trBtn = document.createElement('tr');
-        trBtn.innerHTML = `<td colspan="4" class="text-center py-3"><button class="text-sm text-indigo-600 hover:underline font-medium" onclick="iwShowAll=true;renderInWork();">Показать все ${sorted.length} клиентов (скрыто ${sorted.length - IW_LIMIT})</button></td>`;
+      if(!iwShowAll&&sorted.length>IW_LIMIT){
+        const trBtn=document.createElement('tr');
+        trBtn.innerHTML=`<td colspan="4" class="text-center py-3"><button class="text-sm text-indigo-600 hover:underline font-medium" onclick="iwShowAll=true;renderInWork();">Показать все ${sorted.length} клиентов (скрыто ${sorted.length-IW_LIMIT})</button></td>`;
         tbody.appendChild(trBtn);
-      } else if (iwShowAll && sorted.length > IW_LIMIT) {
-        const trBtn = document.createElement('tr');
-        trBtn.innerHTML = `<td colspan="4" class="text-center py-3"><button class="text-sm text-gray-500 hover:underline" onclick="iwShowAll=false;renderInWork();">Свернуть до 20</button></td>`;
+      } else if(iwShowAll&&sorted.length>IW_LIMIT){
+        const trBtn=document.createElement('tr');
+        trBtn.innerHTML=`<td colspan="4" class="text-center py-3"><button class="text-sm text-gray-500 hover:underline" onclick="iwShowAll=false;renderInWork();">Свернуть до 20</button></td>`;
         tbody.appendChild(trBtn);
       }
     }
@@ -542,62 +537,52 @@
         {name:'до 100 тыс',min:0,max:100000},{name:'100 – 500 тыс',min:100000,max:500000},
         {name:'500 тыс – 1 млн',min:500000,max:1000000},{name:'более 1 млн',min:1000000,max:Infinity}
       ];
-      const clientTotalLTV={},clientTotalDeals={},clientTotalClosed={};
-      filteredDeals.forEach(d=>{if(!clientTotalLTV[d.client]){clientTotalLTV[d.client]=0;clientTotalDeals[d.client]=0;clientTotalClosed[d.client]=0;}clientTotalDeals[d.client]+=1;if(d.won){clientTotalLTV[d.client]+=d.amount;clientTotalClosed[d.client]+=1;}});
+      const clientTotalLTV={};
+      filteredDeals.forEach(d=>{if(!clientTotalLTV[d.client])clientTotalLTV[d.client]=0;if(isWon(d))clientTotalLTV[d.client]+=d.amount;});
       const tbody=document.getElementById('bc-table-body');tbody.innerHTML='';
       corridors.forEach(corridor=>{
         const dealsInCorridor=filteredDeals.filter(d=>d.amount>=corridor.min&&d.amount<corridor.max);
         const clientMap={};
         dealsInCorridor.forEach(d=>{
-          if(!clientMap[d.client]) clientMap[d.client]={client:d.client, deals:0, budget:0, success:0, dealsList:[], responseTimes:[], cycleTimes:[], dealGaps:[], closedDates:[]};
+          if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,budget:0,success:0,successRevenue:0,dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[],closedDates:[]};
           clientMap[d.client].deals+=1;
           clientMap[d.client].budget+=d.amount;
           clientMap[d.client].dealsList.push(d);
-          if(d.won) {
+          if(isWon(d)){
             clientMap[d.client].success+=1;
-            if(d.created && d.closed) {
-              const cycleDays = (d.closed - d.created) / 86400000;
-              if(cycleDays >= 0 && cycleDays < 1000) clientMap[d.client].cycleTimes.push(cycleDays);
-            }
+            clientMap[d.client].successRevenue+=d.amount;
+            if(d.created&&d.closed){const cy=(d.closed-d.created)/86400000;if(cy>=0&&cy<1000)clientMap[d.client].cycleTimes.push(cy);}
           }
-          if(d.created && d.changed && d.stage!=='Новый' && d.stage!=='Неразобранное') {
-            const respHours = (d.changed - d.created) / 3600000;
-            if(respHours >= 0 && respHours < 720) clientMap[d.client].responseTimes.push(respHours);
-          }
-          if((d.won||d.lost) && d.closed) {
-            clientMap[d.client].closedDates.push(d.closed);
-          }
+          if(d.created&&d.changed&&baseStage(d)!=='Новый'&&baseStage(d)!=='Неразобранное'){const h=(d.changed-d.created)/3600000;if(h>=0&&h<720)clientMap[d.client].responseTimes.push(h);}
+          if((isWon(d)||isLost(d))&&d.closed)clientMap[d.client].closedDates.push(d.closed);
         });
-        
-        Object.values(clientMap).forEach(c => {
-          const dates = c.closedDates.sort((a,b)=>a-b);
-          for(let i=1; i<dates.length; i++) {
-            const gap = (dates[i]-dates[i-1])/86400000;
-            if(gap >= 0) c.dealGaps.push(gap);
-          }
+        Object.values(clientMap).forEach(c=>{
+          const dates=c.closedDates.sort((a,b)=>a-b);
+          for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)c.dealGaps.push(g);}
         });
-
-        const clients = Object.values(clientMap).map(c => {
-          const avgResp = c.responseTimes.length ? (c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1) : 'N/A';
-          const avgCyc = c.cycleTimes.length ? (c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1) : 'N/A';
-          const avgGap = c.dealGaps.length ? (c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1) : 'N/A';
-          return {...c, avgResp, avgCyc, avgGap};
-        });
-
+        const clients=Object.values(clientMap).map(c=>({
+          ...c,
+          avgCheck:c.success>0?(c.successRevenue/c.success):0,
+          avgResp:c.responseTimes.length?(c.responseTimes.reduce((a,b)=>a+b,0)/c.responseTimes.length).toFixed(1):'N/A',
+          avgCyc:c.cycleTimes.length?(c.cycleTimes.reduce((a,b)=>a+b,0)/c.cycleTimes.length).toFixed(1):'N/A',
+          avgGap:c.dealGaps.length?(c.dealGaps.reduce((a,b)=>a+b,0)/c.dealGaps.length).toFixed(1):'N/A'
+        }));
         if(!clients.length){
-          const tr = document.createElement('tr'); tr.className='bg-gray-50';
-          tr.innerHTML = `<td class="px-2 py-2 font-semibold text-gray-700" colspan="10">${corridor.name} — нет сделок</td>`;
-          tbody.appendChild(tr); return;
+          const tr=document.createElement('tr');tr.className='bg-gray-50';
+          tr.innerHTML=`<td class="px-2 py-2 font-semibold text-gray-700" colspan="11">${corridor.name} — нет сделок</td>`;
+          tbody.appendChild(tr);return;
         }
         const tDeals=clients.reduce((s,c)=>s+c.deals,0);
         const tBudget=clients.reduce((s,c)=>s+c.budget,0);
         const tSuccess=clients.reduce((s,c)=>s+c.success,0);
+        const tSuccessRev=clients.reduce((s,c)=>s+c.successRevenue,0);
         const tLtv=clients.reduce((s,c)=>s+(clientTotalLTV[c.client]||0),0);
         const tConv=tDeals>0?((tSuccess/tDeals)*100).toFixed(1):'0.0';
-        const isOpen = bcGroupOpen[corridor.name];
-        const trG = document.createElement('tr');
-        trG.className = 'clickable bg-indigo-50 border-b';
-        trG.innerHTML = `
+        const tAvgCheck=tSuccess>0?(tSuccessRev/tSuccess):0;
+        const isOpen=bcGroupOpen[corridor.name];
+        const trG=document.createElement('tr');
+        trG.className='clickable bg-indigo-50 border-b';
+        trG.innerHTML=`
           <td class="px-2 py-3 font-bold text-gray-800"><span class="expand-icon ${isOpen?'open':''}">▶</span>${corridor.name}</td>
           <td class="px-2 py-3 font-bold text-gray-800">${clients.length} кли.</td>
           <td class="px-2 py-3 text-right font-bold text-gray-800">${tDeals}</td>
@@ -605,15 +590,16 @@
           <td class="px-2 py-3 text-right font-bold text-gray-800">${fmtMoney(tLtv)}</td>
           <td class="px-2 py-3 text-right font-bold text-gray-800">${tSuccess}</td>
           <td class="px-2 py-3 text-right font-bold text-indigo-700">${tConv}%</td>
+          <td class="px-2 py-3 text-right font-bold text-green-700">${fmtMoney(tAvgCheck)}</td>
           <td class="px-2 py-3"></td><td class="px-2 py-3"></td><td class="px-2 py-3"></td>`;
-        trG.onclick = () => { bcGroupOpen[corridor.name] = !bcGroupOpen[corridor.name]; renderBudgetCorridors(); };
+        trG.onclick=()=>{bcGroupOpen[corridor.name]=!bcGroupOpen[corridor.name];renderBudgetCorridors();};
         tbody.appendChild(trG);
-        if (isOpen) {
-          const sorted = [...clients].sort((a,b)=>{const key=currentSortKey.replace('bc_','');let va=parseFloat(a[key])||0,vb=parseFloat(b[key])||0;if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;});
+        if(isOpen){
+          const sorted=[...clients].sort((a,b)=>{const key=currentSortKey.replace('bc_','');let va=parseFloat(a[key])||0,vb=parseFloat(b[key])||0;if(va<vb)return -1*sortDirection;if(va>vb)return 1*sortDirection;return 0;});
           sorted.forEach((r,idx)=>{
             const ltv=clientTotalLTV[r.client]||0;
             const conv=r.deals>0?((r.success/r.deals)*100).toFixed(1)+'%':'0%';
-            const isExp = bcClientOpen[r.client];
+            const isExp=bcClientOpen[r.client];
             const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-white/60';
             tr.innerHTML=`
               <td class="px-2 py-2 font-semibold text-gray-700">${idx===0?corridor.name:''}</td>
@@ -623,15 +609,82 @@
               <td class="px-2 py-2 text-right text-gray-700">${fmtMoney(ltv)}</td>
               <td class="px-2 py-2 text-right text-gray-600">${r.success}</td>
               <td class="px-2 py-2 text-right text-gray-600">${conv}</td>
+              <td class="px-2 py-2 text-right font-bold text-green-700">${fmtMoney(r.avgCheck)}</td>
               <td class="px-2 py-2 text-right text-gray-600">${r.avgResp}</td>
               <td class="px-2 py-2 text-right text-gray-600">${r.avgCyc}</td>
               <td class="px-2 py-2 text-right text-gray-600">${r.avgGap}</td>`;
-            tr.onclick = (e) => { e.stopPropagation(); bcClientOpen[r.client] = !bcClientOpen[r.client]; renderBudgetCorridors(); };
+            tr.onclick=(e)=>{e.stopPropagation();bcClientOpen[r.client]=!bcClientOpen[r.client];renderBudgetCorridors();};
             tbody.appendChild(tr);
-            if (isExp) renderDealRows(r.dealsList, tbody);
+            if(isExp)renderDealRows(r.dealsList,tbody,11);
           });
         }
       });
+    }
+
+    // ===== ЗАКРЫТЫЕ СДЕЛКИ ПО ПРИЧИНАМ =====
+    function renderClosed(){
+      const closedDeals=filteredDeals.filter(isLost);
+      const total=closedDeals.length;
+      const budget=closedDeals.reduce((s,d)=>s+d.amount,0);
+      const totalLeads=filteredDeals.length;
+      const share=totalLeads>0?((total/totalLeads)*100).toFixed(1):'0.0';
+      document.getElementById('closed-summary').innerHTML=`
+        <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Всего закрытых (отказов)</p><p class="text-2xl font-bold text-red-700">${total}</p></div>
+        <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Потерянный бюджет</p><p class="text-2xl font-bold text-red-700">${fmtMoney(budget)}</p></div>
+        <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Доля отказов от всех лидов</p><p class="text-2xl font-bold text-red-700">${share}%</p></div>`;
+      const tbody=document.getElementById('closed-table-body');tbody.innerHTML='';
+      if(!total){tbody.innerHTML='<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Нет закрытых сделок за период</td></tr>';return;}
+      const reasonMap={};
+      closedDeals.forEach(d=>{
+        const r=reasonOf(d)||'Не указана';
+        if(!reasonMap[r])reasonMap[r]={reason:r,deals:0,budget:0,clients:{}};
+        reasonMap[r].deals+=1;reasonMap[r].budget+=d.amount;
+        if(!reasonMap[r].clients[d.client])reasonMap[r].clients[d.client]={client:d.client,count:0,budget:0,dealsList:[]};
+        reasonMap[r].clients[d.client].count+=1;
+        reasonMap[r].clients[d.client].budget+=d.amount;
+        reasonMap[r].clients[d.client].dealsList.push(d);
+      });
+      let reasons=Object.values(reasonMap).map(r=>({...r,clientCount:Object.keys(r.clients).length,clients:Object.values(r.clients),share:(r.deals/total*100).toFixed(1)}));
+      reasons.sort((a,b)=>b.deals-a.deals);
+      const toShow=clShowAll?reasons:reasons.slice(0,CL_LIMIT);
+      toShow.forEach(rr=>{
+        const isOpen=clReasonOpen[rr.reason];
+        const trG=document.createElement('tr');
+        trG.className='clickable group-err border-b';
+        trG.innerHTML=`
+          <td class="px-3 py-3 font-bold text-red-900"><span class="expand-icon ${isOpen?'open':''}">▶</span>${rr.reason}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${rr.clientCount}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${rr.deals}</td>
+          <td class="px-3 py-3 text-right font-bold text-gray-800">${fmtMoney(rr.budget)}</td>
+          <td class="px-3 py-3 text-right font-bold text-red-700">${rr.share}%</td>`;
+        trG.onclick=()=>{clReasonOpen[rr.reason]=!clReasonOpen[rr.reason];renderClosed();};
+        tbody.appendChild(trG);
+        if(isOpen){
+          const sortedClients=[...rr.clients].sort((a,b)=>b.count-a.count);
+          sortedClients.forEach(c=>{
+            const isExp=clClientOpen[c.client];
+            const tr=document.createElement('tr');tr.className='clickable border-b hover:bg-white/60';
+            tr.innerHTML=`
+              <td class="px-3 py-2 font-medium text-gray-900 pl-8"><span class="expand-icon ${isExp?'open':''}">▶</span>${c.client}</td>
+              <td class="px-3 py-2 text-right text-gray-500">—</td>
+              <td class="px-3 py-2 text-right text-gray-600">${c.count}</td>
+              <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(c.budget)}</td>
+              <td class="px-3 py-2 text-right text-gray-500">—</td>`;
+            tr.onclick=(e)=>{e.stopPropagation();clClientOpen[c.client]=!clClientOpen[c.client];renderClosed();};
+            tbody.appendChild(tr);
+            if(isExp)renderDealRows(c.dealsList,tbody,5);
+          });
+        }
+      });
+      if(!clShowAll&&reasons.length>CL_LIMIT){
+        const trBtn=document.createElement('tr');
+        trBtn.innerHTML=`<td colspan="5" class="text-center py-3"><button class="text-sm text-red-600 hover:underline font-medium" onclick="clShowAll=true;renderClosed();">Показать все ${reasons.length} причин (скрыто ${reasons.length-CL_LIMIT})</button></td>`;
+        tbody.appendChild(trBtn);
+      } else if(clShowAll&&reasons.length>CL_LIMIT){
+        const trBtn=document.createElement('tr');
+        trBtn.innerHTML=`<td colspan="5" class="text-center py-3"><button class="text-sm text-gray-500 hover:underline" onclick="clShowAll=false;renderClosed();">Свернуть до 20</button></td>`;
+        tbody.appendChild(trBtn);
+      }
     }
 
     function sortTable(key){if(currentSortKey===key)sortDirection*=-1;else{currentSortKey=key;sortDirection=-1;}renderAll();}
@@ -646,20 +699,7 @@
     function renderDiagnostic(d){
       if(!d.found){document.getElementById('diag-content').innerHTML='<p class="text-red-600">Лист Sheet1 не найден</p>';return;}
       let html=`<div><b class="text-gray-700">Активный лист:</b> ${d.sheetName} (${d.rowCount} строк)</div>`;
-      html+=`<div class="mt-2"><b class="text-gray-700">Выбранная колонка типа:</b> ${d.typeColumnFound ? `<span class="chip ok">${d.typeColumnFound.name} (индекс ${d.typeColumnFound.index}, B2B: ${d.typeColumnFound.matches})</span>` : '<span class="chip warn">не найдена</span>'}</div>`;
-      html+=`<div class="mt-2"><b class="text-gray-700">Сегменты (выборка):</b> <span class="chip ok">B2B: ${d.b2bCount}</span> <span class="chip">B2C: ${d.b2cCount}</span></div>`;
-      html+=`<div class="mt-4"><b class="text-gray-700 text-base">✅ Успешные по стадиям:</b>`;
-      const wonEntries=Object.entries(d.wonByStage||{}).sort((a,b)=>b[1]-a[1]);
-      html += wonEntries.length ? wonEntries.map(([s,n])=>`<span class="chip ok">${s} ×${n}</span>`).join('') : '<span class="chip warn">нет</span>';
-      html += '</div>';
-      html += `<div class="mt-3"><b class="text-gray-700 text-base">❌ Неуспешные по стадиям:</b>`;
-      const lostEntries=Object.entries(d.lostByStage||{}).sort((a,b)=>b[1]-a[1]);
-      html += lostEntries.length ? lostEntries.map(([s,n])=>`<span class="chip warn">${s} ×${n}</span>`).join('') : '<span class="chip warn">нет</span>';
-      html += '</div>';
-      html+=`<div class="mt-4"><b class="text-gray-700 text-base">📋 ВСЕ колонки с B2B-совпадениями:</b>`;
-      html+=(d.allTypeColumns||[]).map(c=>`<div class="text-xs mt-1"><span class="chip ${d.typeColumnFound && c.index===d.typeColumnFound.index?'ok':''}">#${c.index} ${c.name} → B2B ×${c.matches}</span></div>`).join('');
-      html+='</div>';
-      if(d.typeValues&&d.typeValues.length)html+='<div class="mt-4"><b class="text-gray-700">Значения выбранной колонки:</b><br>'+d.typeValues.map(([v,n])=>`<span class="chip">${v} ×${n}</span>`).join('')+'</div>';
+      html+=`<div class="mt-2"><b class="text-gray-700">Выбранная колонка типа:</b> ${d.typeColumnFound ? `<span class="chip ok">${d.typeColumnFound.name} (B2B: ${d.typeColumnFound.matches})</span>` : '<span class="chip warn">не найдена</span>'}</div>`;
       if(d.statusValues&&d.statusValues.length)html+='<div class="mt-4"><b class="text-gray-700">Значения "Этап сделки":</b><br>'+d.statusValues.map(([v,n])=>`<span class="chip">${v} ×${n}</span>`).join('')+'</div>';
       document.getElementById('diag-content').innerHTML=html;
     }
