@@ -10,6 +10,9 @@
     .chip { display:inline-block; background:#eef2ff; color:#4338ca; padding:2px 8px; border-radius:6px; font-size:12px; margin:2px; }
     .chip.warn { background:#fef3c7; color:#92400e; } .chip.ok { background:#d1fae5; color:#065f46; }
     .chip.err { background:#fee2e2; color:#991b1b; }
+    .chip.new-client { background:#d1fae5; color:#065f46; font-weight:600; }
+    .chip.lost-client { background:#fee2e2; color:#991b1b; font-weight:600; }
+    .chip.stay-client { background:#dbeafe; color:#1e40af; font-weight:600; }
     .chip.a-group { background:#d1fae5; color:#065f46; font-weight:600; }
     .chip.b-group { background:#dbeafe; color:#1e40af; font-weight:600; }
     .chip.c-group { background:#fef3c7; color:#92400e; font-weight:600; }
@@ -37,6 +40,7 @@
     .group-err { background:#fef2f2; }
     .period-cell { background:#fafafa; }
     .period-header { background:#f1f5f9; }
+    .comp-up { color:#065f46; } .comp-down { color:#991b1b; } .comp-same { color:#6b7280; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -70,6 +74,7 @@
     <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg w-fit mb-6">
       <button onclick="switchTab('b2b')" id="tab-b2b" class="px-6 py-2 rounded-md font-semibold transition-all tab-active">B2B Воронка</button>
       <button onclick="switchTab('b2c')" id="tab-b2c" class="px-6 py-2 rounded-md font-semibold transition-all tab-inactive">B2C Воронка</button>
+      <button onclick="switchTab('compare')" id="tab-compare" class="px-6 py-2 rounded-md font-semibold transition-all tab-inactive">📊 Сравнение</button>
     </div>
 
     <div id="diag-block" class="hidden bg-white border border-indigo-200 rounded-xl p-6 mb-6 shadow-sm max-h-[70vh] overflow-y-auto">
@@ -88,135 +93,216 @@
     </div>
 
     <div id="content" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сводка по вкладке <span id="summary-tab" class="text-indigo-600"></span></h2>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div class="text-center"><p class="text-xs text-gray-500">Всего лидов</p><p id="sum-leads" class="text-2xl font-bold text-gray-900">-</p></div>
-          <div class="text-center"><p class="text-xs text-gray-500">Выручка всех лидов</p><p id="sum-rev-all" class="text-2xl font-bold text-gray-900">-</p></div>
-          <div class="text-center"><p class="text-xs text-gray-500">Всего успешных сделок</p><p id="sum-success" class="text-2xl font-bold text-green-700">-</p></div>
-          <div class="text-center"><p class="text-xs text-gray-500">Выручка успешных</p><p id="sum-rev-succ" class="text-2xl font-bold text-green-700">-</p></div>
-          <div class="text-center"><p class="text-xs text-gray-500">Конверсия</p><p id="sum-conv" class="text-2xl font-bold text-indigo-700">-</p></div>
-        </div>
-      </div>
-
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <h2 class="text-lg font-bold text-gray-800 mb-4">📈 Средние показатели за период <span id="period-info" class="text-sm text-gray-500 font-normal"></span></h2>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="period-header border-b border-gray-200"><tr>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600">Показатель</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600">В месяц</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600">В неделю</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600">В день</th>
-            </tr></thead>
-            <tbody id="period-table-body" class="divide-y divide-gray-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- ВКЛАДКИ B2B/B2C -->
+      <div id="tabs-b2b-b2c">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера</p>
-          <p class="text-3xl font-bold text-gray-900"><span id="metric-response">-</span> <span class="text-base font-normal text-gray-500">часов</span></p>
+          <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сводка по вкладке <span id="summary-tab" class="text-indigo-600"></span></h2>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="text-center"><p class="text-xs text-gray-500">Всего лидов</p><p id="sum-leads" class="text-2xl font-bold text-gray-900">-</p></div>
+            <div class="text-center"><p class="text-xs text-gray-500">Выручка всех лидов</p><p id="sum-rev-all" class="text-2xl font-bold text-gray-900">-</p></div>
+            <div class="text-center"><p class="text-xs text-gray-500">Всего успешных сделок</p><p id="sum-success" class="text-2xl font-bold text-green-700">-</p></div>
+            <div class="text-center"><p class="text-xs text-gray-500">Выручка успешных</p><p id="sum-rev-succ" class="text-2xl font-bold text-green-700">-</p></div>
+            <div class="text-center"><p class="text-xs text-gray-500">Конверсия</p><p id="sum-conv" class="text-2xl font-bold text-indigo-700">-</p></div>
+          </div>
         </div>
+
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки</p>
-          <p class="text-3xl font-bold text-gray-900"><span id="metric-cycle">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          <h2 class="text-lg font-bold text-gray-800 mb-4">📈 Средние показатели за период <span id="period-info" class="text-sm text-gray-500 font-normal"></span></h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="period-header border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Показатель</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">В месяц</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">В неделю</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">В день</th>
+              </tr></thead>
+              <tbody id="period-table-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm font-medium text-gray-500 mb-1">⏱ Скорость ответа менеджера</p>
+            <p class="text-3xl font-bold text-gray-900"><span id="metric-response">-</span> <span class="text-base font-normal text-gray-500">часов</span></p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm font-medium text-gray-500 mb-1">🔄 Цикл сделки</p>
+            <p class="text-3xl font-bold text-gray-900"><span id="metric-cycle">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          </div>
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками</p>
+            <p class="text-3xl font-bold text-gray-900"><span id="metric-gap">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Этапы воронки продаж</h2>
+            <span id="funnel-total" class="text-sm text-gray-500"></span>
+          </div>
+          <div id="funnel-container" class="space-y-3"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+            <h2 class="text-xl font-bold text-gray-800">Клиенты по ABC-анализу</h2>
+            <div class="flex gap-2 text-xs flex-wrap"><span class="chip a-group">A — 80% выручки</span><span class="chip b-group">B — 15% выручки</span><span class="chip c-group">C — 5% выручки</span></div>
+          </div>
+          <p class="text-xs text-gray-500 mb-3">💡 Выручка = Успешно + Оплачено + Обратная связь + <b>Заказ (Предоплата)</b>. Клик по группе → клиенты; клик по клиенту → сделки с ID.</p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-2 py-2 text-left font-semibold text-gray-600">Группа</th>
+                <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('name')">Клиент ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('deals')">Сделок ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('closedDeals')">Успешных ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('conversion')">Конверсия ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('revenue')">Выручка (с заказами) ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCheck')">Ср. чек ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgResp')">Ответ (ч) ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCyc')">Цикл (дн) ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgGap')">Между сделками (дн) ↕</th>
+              </tr></thead>
+              <tbody id="abc-table-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Сделки "В работе"</h2>
+          <p class="text-xs text-gray-500 mb-3">Активные сделки без финальных стадий (успех/отказ). По умолчанию 20 клиентов — кнопка «Показать все».</p>
+          <div id="inwork-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('iw_client')">Клиент ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_count')">Сделок ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_budget')">Бюджет сделок ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_avg')">Средний бюджет ↕</th>
+              </tr></thead>
+              <tbody id="inwork-table-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Анализ по бюджетным коридорам</h2>
+          <p class="text-xs text-gray-500 mb-3">💡 Клик по коридору → клиенты; клик по клиенту → сделки с ID.</p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-2 py-2 text-left font-semibold text-gray-600">Коридор</th>
+                <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('bc_client')">Клиент ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCheck')">Ср. чек ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgResp')">Ответ (ч) ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCyc')">Цикл (дн) ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgGap')">Между сделками (дн) ↕</th>
+              </tr></thead>
+              <tbody id="bc-table-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-red-100">
+          <h2 class="text-xl font-bold text-red-800 mb-1">🚫 Закрытые сделки по причинам</h2>
+          <p class="text-xs text-gray-500 mb-3">Все отказы («Закрыто и не реализовано»). Клик по причине → клиенты; клик по клиенту → сделки с ID.</p>
+          <div id="closed-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-red-50 border-b border-red-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-red-900">Причина закрытия</th>
+                <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_clients')">Клиентов ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_deals')">Сделок ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_budget')">Бюджет ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_share')">Доля отказов ↕</th>
+              </tr></thead>
+              <tbody id="closed-table-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ВКЛАДКА СРАВНЕНИЕ -->
+      <div id="tab-compare-content" class="hidden space-y-6">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <p class="text-sm font-medium text-gray-500 mb-1">🔁 Между сделками</p>
-          <p class="text-3xl font-bold text-gray-900"><span id="metric-gap">-</span> <span class="text-base font-normal text-gray-500">дней</span></p>
+          <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сравнение двух периодов</h2>
+          <p class="text-xs text-gray-500 mb-4">Выберите два периода для сравнения. Сегмент (B2B/B2C) берётся из активной вкладки.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-indigo-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-indigo-800 mb-2">📅 Период 1 (базовый)</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-xs text-gray-500">Год</label><select id="cmp-year1" class="w-full border border-gray-200 rounded p-1.5 text-sm" onchange="runCompare()"></select></div>
+                <div><label class="text-xs text-gray-500">Месяц (опц.)</label><select id="cmp-month1" class="w-full border border-gray-200 rounded p-1.5 text-sm" onchange="runCompare()"><option value="">Все</option></select></div>
+              </div>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h3 class="font-semibold text-green-800 mb-2">📅 Период 2 (сравниваемый)</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-xs text-gray-500">Год</label><select id="cmp-year2" class="w-full border border-gray-200 rounded p-1.5 text-sm" onchange="runCompare()"></select></div>
+                <div><label class="text-xs text-gray-500">Месяц (опц.)</label><select id="cmp-month2" class="w-full border border-gray-200 rounded p-1.5 text-sm" onchange="runCompare()"><option value="">Все</option></select></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div class="bg-gray-50 p-3 rounded"><p class="text-xs text-gray-500">Сегмент</p><p id="cmp-segment" class="text-lg font-bold text-gray-900">B2B</p></div>
+            <div class="bg-indigo-50 p-3 rounded"><p class="text-xs text-gray-500">Период 1: лидов</p><p id="cmp-leads1" class="text-lg font-bold text-indigo-700">-</p></div>
+            <div class="bg-green-50 p-3 rounded"><p class="text-xs text-gray-500">Период 2: лидов</p><p id="cmp-leads2" class="text-lg font-bold text-green-700">-</p></div>
+            <div class="bg-amber-50 p-3 rounded"><p class="text-xs text-gray-500">Разница</p><p id="cmp-diff" class="text-lg font-bold text-amber-700">-</p></div>
+          </div>
         </div>
-      </div>
 
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold text-gray-800">Этапы воронки продаж</h2>
-          <span id="funnel-total" class="text-sm text-gray-500"></span>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-2">👥 Сравнение клиентов по ABC</h2>
+          <p class="text-xs text-gray-500 mb-4">
+            <span class="chip new-client">+ Новый</span> — появился в Периоде 2, не было в Периоде 1
+            <span class="chip lost-client">− Потерян</span> — был в Периоде 1, нет в Периоде 2
+            <span class="chip stay-client">= Остался</span> — есть в обоих периодах
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="bg-green-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Новых клиентов</p><p id="cmp-new-clients" class="text-2xl font-bold text-green-700">-</p></div>
+            <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Потерянных клиентов</p><p id="cmp-lost-clients" class="text-2xl font-bold text-red-700">-</p></div>
+            <div class="bg-blue-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Осталось клиентов</p><p id="cmp-stay-clients" class="text-2xl font-bold text-blue-700">-</p></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Статус</th>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Клиент</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Группа П1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Группа П2</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Выручка П1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Выручка П2</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Δ Выручка</th>
+              </tr></thead>
+              <tbody id="cmp-abc-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
         </div>
-        <div id="funnel-container" class="space-y-3"></div>
-      </div>
 
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
-          <h2 class="text-xl font-bold text-gray-800">Клиенты по ABC-анализу</h2>
-          <div class="flex gap-2 text-xs flex-wrap"><span class="chip a-group">A — 80% выручки</span><span class="chip b-group">B — 15% выручки</span><span class="chip c-group">C — 5% выручки</span></div>
-        </div>
-        <p class="text-xs text-gray-500 mb-3">💡 Клик по группе → клиенты; клик по клиенту → сделки с ID.</p>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200"><tr>
-              <th class="px-2 py-2 text-left font-semibold text-gray-600">Группа</th>
-              <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('name')">Клиент ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('deals')">Сделок ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('closedDeals')">Успешных ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('conversion')">Конверсия ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('revenue')">Выручка ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCheck')">Ср. чек ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgResp')">Ответ (ч) ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgCyc')">Цикл (дн) ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('avgGap')">Между сделками (дн) ↕</th>
-            </tr></thead>
-            <tbody id="abc-table-body" class="divide-y divide-gray-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Сделки "В работе"</h2>
-        <p class="text-xs text-gray-500 mb-3">Активные сделки без финальных стадий (успех/отказ). По умолчанию 20 клиентов — кнопка «Показать все».</p>
-        <div id="inwork-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200"><tr>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('iw_client')">Клиент ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_count')">Сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_budget')">Бюджет сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('iw_avg')">Средний бюджет ↕</th>
-            </tr></thead>
-            <tbody id="inwork-table-body" class="divide-y divide-gray-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Анализ по бюджетным коридорам</h2>
-        <p class="text-xs text-gray-500 mb-3">💡 Клик по коридору → клиенты; клик по клиенту → сделки с ID.</p>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200"><tr>
-              <th class="px-2 py-2 text-left font-semibold text-gray-600">Коридор</th>
-              <th class="px-2 py-2 text-left font-semibold text-gray-600 sortable" onclick="sortTable('bc_client')">Клиент ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCheck')">Ср. чек ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgResp')">Ответ (ч) ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCyc')">Цикл (дн) ↕</th>
-              <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgGap')">Между сделками (дн) ↕</th>
-            </tr></thead>
-            <tbody id="bc-table-body" class="divide-y divide-gray-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-red-100">
-        <h2 class="text-xl font-bold text-red-800 mb-1">🚫 Закрытые сделки по причинам</h2>
-        <p class="text-xs text-gray-500 mb-3">Все отказы («Закрыто и не реализовано»). Клик по причине → клиенты; клик по клиенту → сделки с ID.</p>
-        <div id="closed-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"></div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-red-50 border-b border-red-200"><tr>
-              <th class="px-3 py-2 text-left font-semibold text-red-900">Причина закрытия</th>
-              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_clients')">Клиентов ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_deals')">Сделок ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_budget')">Бюджет ↕</th>
-              <th class="px-3 py-2 text-right font-semibold text-red-900 sortable" onclick="sortTable('cl_share')">Доля отказов ↕</th>
-            </tr></thead>
-            <tbody id="closed-table-body" class="divide-y divide-gray-100"></tbody>
-          </table>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Сравнение бюджетных коридоров</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Коридор</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Клиентов П1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Клиентов П2</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Δ Клиентов</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Бюджет П1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Бюджет П2</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Δ Бюджет</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Успешных П1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Успешных П2</th>
+              </tr></thead>
+              <tbody id="cmp-bc-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -226,6 +312,7 @@
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGVYV8t0jRsoc3y8NqxK20dFUB2YR6F8ZjQ5OZJtfhCoyo7r8eNKi93cc6hY4w9c0i/exec';
 
     const WON_STAGES=['Оплачен полностью','Обратная связь','Успешно реализовано'];
+    const ORDER_STAGE='Заказ (Предоплата) в работе';
     const LOST_BASE='Закрыто и не реализовано';
     const FUNNEL_MAP={'Неразобранное':0,'Новый':0,'В работе':0,'Квалифицирован':1,'Встреча назначена':2,'Встреча проведена':2,'ТЗ на просчет получено':3,'КП отправлено':3,'счет/договор отправлен':4,'Заказ (Предоплата) в работе':5,'Оплачен полностью':6,'Обратная связь':6,'Успешно реализовано':6};
 
@@ -234,7 +321,6 @@
       const m = s.match(/^([^(]+)/);
       return m ? m[1].trim() : s.trim();
     }
-    // ИСПРАВЛЕНО: сначала берём из d.reason (сервер уже извлёк), потом фолбэк на скобки
     function reasonOf(d){
       if (d.reason && String(d.reason).trim()) return String(d.reason).trim();
       const s = String(d.stage||'');
@@ -245,6 +331,7 @@
       return '';
     }
     function isWon(d){ return WON_STAGES.includes(baseStage(d)); }
+    function isOrder(d){ return baseStage(d) === ORDER_STAGE; }
     function isLost(d){ return baseStage(d) === LOST_BASE; }
     function funnelIdxOf(d){ const b=baseStage(d); return FUNNEL_MAP[b]!==undefined?FUNNEL_MAP[b]:-1; }
 
@@ -265,6 +352,7 @@
           document.getElementById('last-updated').textContent = `Обновлено: ${data.lastUpdated}`;
           document.getElementById('info-line').textContent = `✅ Лист: "${data.detectedSheet}" · Колонка типа: "${data.detectedTypeColumn}" (B2B: ${data.typeMatches}) · Сделок: ${RAW_DEALS.length} · Годы: ${FILTERS.years.join(', ')}`;
           initMultiselects();
+          initCompareSelects();
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('content').classList.remove('hidden');
           applyFilters();
@@ -336,6 +424,21 @@
     function resetFilters(){msYear.setState([]);msMonth.setState([]);msType.setState([]);msStage.setState([]);msAbc.setState([]);applyFilters();}
     function resetExpandState(){abcGroupOpen={A:false,B:false,C:false};abcClientOpen={};bcGroupOpen={};bcClientOpen={};iwClientOpen={};iwShowAll=false;clReasonOpen={};clClientOpen={};clShowAll=false;}
 
+    function initCompareSelects(){
+      const y1=document.getElementById('cmp-year1'), y2=document.getElementById('cmp-year2');
+      const m1=document.getElementById('cmp-month1'), m2=document.getElementById('cmp-month2');
+      y1.innerHTML='<option value="">Все</option>'; y2.innerHTML='<option value="">Все</option>';
+      FILTERS.years.forEach(y=>{
+        y1.innerHTML+=`<option value="${y}">${y}</option>`;
+        y2.innerHTML+=`<option value="${y}">${y}</option>`;
+      });
+      m1.innerHTML='<option value="">Все</option>'; m2.innerHTML='<option value="">Все</option>';
+      FILTERS.months.forEach(m=>{
+        m1.innerHTML+=`<option value="${m}">${MONTH_NAMES[m-1]} (${m})</option>`;
+        m2.innerHTML+=`<option value="${m}">${MONTH_NAMES[m-1]} (${m})</option>`;
+      });
+    }
+
     function applyFilters(){
       const years=Array.from(msYear.getState()).map(v=>parseInt(v));
       const months=Array.from(msMonth.getState()).map(v=>parseInt(v.match(/\((\d+)\)/)?.[1]||v));
@@ -353,9 +456,11 @@
       });
       const clientMap={};
       filteredDeals.forEach(d=>{
-        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,closedDates:[],dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[]};
+        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,revenueWithOrders:0,closedDates:[],dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[]};
         clientMap[d.client].deals+=1;
         clientMap[d.client].dealsList.push(d);
+        // ABC-выручка: won + Заказ
+        if(isWon(d)||isOrder(d)) clientMap[d.client].revenueWithOrders+=d.amount;
         if((isWon(d)||isLost(d))&&d.closed){
           clientMap[d.client].closedDates.push(d.closed);
           if(d.created){const cy=(d.closed-d.created)/86400000;if(cy>=0&&cy<1000)clientMap[d.client].cycleTimes.push(cy);}
@@ -367,11 +472,11 @@
         const dates=c.closedDates.sort((a,b)=>a-b);
         for(let i=1;i<dates.length;i++){const g=(dates[i]-dates[i-1])/86400000;if(g>=0)c.dealGaps.push(g);}
       });
-      const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenue-a.revenue);
-      const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenue,0);
+      const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenueWithOrders-a.revenueWithOrders);
+      const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenueWithOrders,0);
       let cum=0;
       abcData=clientsArr.map(c=>{
-        cum+=c.revenue;const pct=totalRevenue>0?cum/totalRevenue:0;
+        cum+=c.revenueWithOrders;const pct=totalRevenue>0?cum/totalRevenue:0;
         let abc='C';if(pct<=0.80)abc='A';else if(pct<=0.95)abc='B';
         const avgCheck=c.closedDeals>0?c.revenue/c.closedDeals:0;
         const conversion=c.deals>0?((c.closedDeals/c.deals)*100).toFixed(1):'0';
@@ -501,7 +606,7 @@
         tr.className = 'deal-row';
         const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
         const reason = reasonOf(d);
-        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reason||'без причины'}</span>` : '';
+        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reason||'без причины'}</span>` : isOrder(d) ? '<span class="chip" style="background:#fef3c7;color:#92400e">заказ</span>' : '';
         tr.innerHTML = `
           <td colspan="${colspan}" class="pl-12">
             <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
@@ -529,7 +634,7 @@
         if(!clients.length)return;
         const tDeals=clients.reduce((s,c)=>s+c.deals,0);
         const tClosed=clients.reduce((s,c)=>s+c.closedDeals,0);
-        const tRev=clients.reduce((s,c)=>s+c.revenue,0);
+        const tRev=clients.reduce((s,c)=>s+c.revenueWithOrders,0);
         const totalLeads=filteredDeals.length;
         const convFromAll=totalLeads>0?((tClosed/totalLeads)*100).toFixed(1):'0.0';
         const avgCheck=tClosed>0?tRev/tClosed:0;
@@ -565,7 +670,7 @@
               <td class="px-2 py-2 text-right text-gray-600">${c.deals}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.closedDeals}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.conversion}</td>
-              <td class="px-2 py-2 text-right font-bold text-green-700">${fmtMoney(c.revenue)}</td>
+              <td class="px-2 py-2 text-right font-bold text-green-700">${fmtMoney(c.revenueWithOrders)}</td>
               <td class="px-2 py-2 text-right text-gray-700">${fmtMoney(c.avgCheck)}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.avgResp}</td>
               <td class="px-2 py-2 text-right text-gray-600">${c.avgCyc}</td>
@@ -579,7 +684,7 @@
       const allClients=abcData;
       const allDeals=allClients.reduce((s,c)=>s+c.deals,0);
       const allClosed=allClients.reduce((s,c)=>s+c.closedDeals,0);
-      const allRev=allClients.reduce((s,c)=>s+c.revenue,0);
+      const allRev=allClients.reduce((s,c)=>s+c.revenueWithOrders,0);
       const totalLeads=filteredDeals.length;
       const convFromAll=totalLeads>0?((allClosed/totalLeads)*100).toFixed(1):'0.0';
       const avgCheck=allClosed>0?allRev/allClosed:0;
@@ -774,8 +879,158 @@
       }
     }
 
+    // ===== ВКЛАДКА СРАВНЕНИЕ =====
+    function getDealsForPeriod(year, month, seg){
+      return RAW_DEALS.filter(d=>{
+        if(d.segment!==seg)return false;
+        if(year && d.year!==parseInt(year))return false;
+        if(month && d.month!==parseInt(month))return false;
+        return true;
+      });
+    }
+
+    function buildAbcMap(deals){
+      const clientMap={};
+      deals.forEach(d=>{
+        if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,revenueWithOrders:0};
+        clientMap[d.client].deals+=1;
+        if(isWon(d)||isOrder(d)) clientMap[d.client].revenueWithOrders+=d.amount;
+        if(isWon(d)){clientMap[d.client].closedDeals+=1;clientMap[d.client].revenue+=d.amount;}
+      });
+      const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenueWithOrders-a.revenueWithOrders);
+      const totalRevenue=clientsArr.reduce((s,c)=>s+c.revenueWithOrders,0);
+      let cum=0;
+      return clientsArr.reduce((map,c)=>{
+        cum+=c.revenueWithOrders;const pct=totalRevenue>0?cum/totalRevenue:0;
+        let abc='C';if(pct<=0.80)abc='A';else if(pct<=0.95)abc='B';
+        map[c.client]={abc, revenue:c.revenue, revenueWithOrders:c.revenueWithOrders, deals:c.deals, closedDeals:c.closedDeals};
+        return map;
+      },{});
+    }
+
+    function buildBcMap(deals){
+      const corridors=[
+        {name:'до 100 тыс',min:0,max:100000},{name:'100 – 500 тыс',min:100000,max:500000},
+        {name:'500 тыс – 1 млн',min:500000,max:1000000},{name:'более 1 млн',min:1000000,max:Infinity}
+      ];
+      const result={};
+      corridors.forEach(c=>{
+        const cd=deals.filter(d=>d.amount>=c.min&&d.amount<c.max);
+        const clients=new Set(cd.map(d=>d.client));
+        const budget=cd.reduce((s,d)=>s+d.amount,0);
+        const success=cd.filter(isWon).length;
+        result[c.name]={clients:clients.size, budget, success, deals:cd.length};
+      });
+      return result;
+    }
+
+    function runCompare(){
+      const y1=document.getElementById('cmp-year1').value;
+      const y2=document.getElementById('cmp-year2').value;
+      const m1=document.getElementById('cmp-month1').value;
+      const m2=document.getElementById('cmp-month2').value;
+      const seg=currentTab==='b2b'?'b2b':'b2c';
+      document.getElementById('cmp-segment').textContent=seg.toUpperCase();
+
+      if(!y1||!y2){
+        document.getElementById('cmp-leads1').textContent='-';
+        document.getElementById('cmp-leads2').textContent='-';
+        document.getElementById('cmp-diff').textContent='Выберите оба года';
+        document.getElementById('cmp-abc-body').innerHTML='<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Выберите годы для обоих периодов</td></tr>';
+        document.getElementById('cmp-bc-body').innerHTML='';
+        return;
+      }
+
+      const deals1=getDealsForPeriod(y1,m1,seg);
+      const deals2=getDealsForPeriod(y2,m2,seg);
+      document.getElementById('cmp-leads1').textContent=deals1.length;
+      document.getElementById('cmp-leads2').textContent=deals2.length;
+      const diff=deals2.length-deals1.length;
+      document.getElementById('cmp-diff').textContent=(diff>0?'+':'')+diff;
+      document.getElementById('cmp-diff').className=`text-lg font-bold ${diff>0?'text-green-700':diff<0?'text-red-700':'text-gray-700'}`;
+
+      const abc1=buildAbcMap(deals1);
+      const abc2=buildAbcMap(deals2);
+      const allClients=new Set([...Object.keys(abc1),...Object.keys(abc2)]);
+      let newCount=0, lostCount=0, stayCount=0;
+      const rows=[];
+      allClients.forEach(cl=>{
+        const in1=abc1[cl], in2=abc2[cl];
+        let status, statusClass;
+        if(!in1&&in2){status='+ Новый';statusClass='new-client';newCount++;}
+        else if(in1&&!in2){status='− Потерян';statusClass='lost-client';lostCount++;}
+        else{status='= Остался';statusClass='stay-client';stayCount++;}
+        rows.push({
+          status, statusClass, client:cl,
+          abc1:in1?in1.abc:'-', abc2:in2?in2.abc:'-',
+          rev1:in1?in1.revenueWithOrders:0, rev2:in2?in2.revenueWithOrders:0,
+          revDiff:(in2?in2.revenueWithOrders:0)-(in1?in1.revenueWithOrders:0)
+        });
+      });
+      rows.sort((a,b)=>{
+        const order={'+ Новый':0,'= Остался':1,'− Потерян':2};
+        if(order[a.status]!==order[b.status])return order[a.status]-order[b.status];
+        return b.rev2-a.rev2;
+      });
+      document.getElementById('cmp-new-clients').textContent=newCount;
+      document.getElementById('cmp-lost-clients').textContent=lostCount;
+      document.getElementById('cmp-stay-clients').textContent=stayCount;
+
+      const tbody=document.getElementById('cmp-abc-body');
+      tbody.innerHTML='';
+      rows.forEach(r=>{
+        const diffClass=r.revDiff>0?'comp-up':r.revDiff<0?'comp-down':'comp-same';
+        const diffSign=r.revDiff>0?'+':'';
+        const tr=document.createElement('tr');
+        tr.className='border-b hover:bg-gray-50';
+        tr.innerHTML=`
+          <td class="px-3 py-2"><span class="chip ${r.statusClass}">${r.status}</span></td>
+          <td class="px-3 py-2 font-medium text-gray-900">${r.client}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${r.abc1}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${r.abc2}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev1)}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev2)}</td>
+          <td class="px-3 py-2 text-right font-bold ${diffClass}">${diffSign}${fmtMoney(r.revDiff)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      const bc1=buildBcMap(deals1);
+      const bc2=buildBcMap(deals2);
+      const bcBody=document.getElementById('cmp-bc-body');
+      bcBody.innerHTML='';
+      Object.keys(bc1).forEach(name=>{
+        const c1=bc1[name], c2=bc2[name]||{clients:0,budget:0,success:0};
+        const dClients=c2.clients-c1.clients;
+        const dBudget=c2.budget-c1.budget;
+        const dSuccess=c2.success-c1.success;
+        const tr=document.createElement('tr');
+        tr.className='border-b hover:bg-gray-50';
+        tr.innerHTML=`
+          <td class="px-3 py-2 font-semibold text-gray-700">${name}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${c1.clients}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${c2.clients}</td>
+          <td class="px-3 py-2 text-right font-bold ${dClients>0?'comp-up':dClients<0?'comp-down':'comp-same'}">${dClients>0?'+':''}${dClients}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(c1.budget)}</td>
+          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(c2.budget)}</td>
+          <td class="px-3 py-2 text-right font-bold ${dBudget>0?'comp-up':dBudget<0?'comp-down':'comp-same'}">${dBudget>0?'+':''}${fmtMoney(dBudget)}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${c1.success}</td>
+          <td class="px-3 py-2 text-right text-gray-600">${c2.success}</td>`;
+        bcBody.appendChild(tr);
+      });
+    }
+
     function sortTable(key){if(currentSortKey===key)sortDirection*=-1;else{currentSortKey=key;sortDirection=-1;}renderAll();}
-    function switchTab(tab){currentTab=tab;const a='px-6 py-2 rounded-md font-semibold transition-all tab-active';const i='px-6 py-2 rounded-md font-semibold transition-all tab-inactive';document.getElementById('tab-b2b').className=tab==='b2b'?a:i;document.getElementById('tab-b2c').className=tab==='b2c'?a:i;applyFilters();}
+    function switchTab(tab){
+      currentTab=tab;
+      const a='px-6 py-2 rounded-md font-semibold transition-all tab-active';
+      const i='px-6 py-2 rounded-md font-semibold transition-all tab-inactive';
+      document.getElementById('tab-b2b').className=tab==='b2b'?a:i;
+      document.getElementById('tab-b2c').className=tab==='b2c'?a:i;
+      document.getElementById('tab-compare').className=tab==='compare'?a:i;
+      document.getElementById('tabs-b2b-b2c').classList.toggle('hidden', tab==='compare');
+      document.getElementById('tab-compare-content').classList.toggle('hidden', tab!=='compare');
+      if(tab==='compare') runCompare(); else applyFilters();
+    }
     function toggleDiag(){const block=document.getElementById('diag-block');block.classList.toggle('hidden');if(!block.classList.contains('hidden')){document.getElementById('diag-content').innerHTML='<p class="text-gray-500">Анализирую...</p>';
       fetch(APPS_SCRIPT_URL + '?action=getDiagnostic')
         .then(r=>r.json())
