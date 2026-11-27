@@ -153,7 +153,7 @@
             <h2 class="text-xl font-bold text-gray-800">Клиенты по ABC-анализу</h2>
             <div class="flex gap-2 text-xs flex-wrap"><span class="chip a-group">A — 80% выручки</span><span class="chip b-group">B — 15% выручки</span><span class="chip c-group">C — 5% выручки</span></div>
           </div>
-          <p class="text-xs text-gray-500 mb-3">💡 Выручка = Успешно + Оплачено + Обратная связь + <b>Заказ (Предоплата)</b>. Клик по группе → клиенты; клик по клиенту → сделки с ID.</p>
+          <p class="text-xs text-gray-500 mb-3">💡 Выручка = Успешно + Оплачено + Обратная связь + <b>Заказ</b>. Клик по группе → клиенты; клик по клиенту → сделки с ID.</p>
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
               <thead class="bg-gray-50 border-b border-gray-200"><tr>
@@ -201,7 +201,7 @@
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_deals')">Сделок ↕</th>
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_budget')">Бюджет ↕</th>
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_ltv')">ЛТВ ↕</th>
-                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных ↕</th>
+                <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_success')">Успешных + заказов ↕</th>
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_conv')">Конверсия ↕</th>
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgCheck')">Ср. чек ↕</th>
                 <th class="px-2 py-2 text-right font-semibold text-gray-600 sortable" onclick="sortTable('bc_avgResp')">Ответ (ч) ↕</th>
@@ -236,13 +236,10 @@
       <div id="tab-compare-content" class="hidden space-y-6">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сравнение двух периодов</h2>
-          
-          <!-- Переключатель B2B/B2C -->
           <div class="flex gap-2 mb-4">
             <button onclick="setCompareSegment('b2b')" id="cmp-seg-b2b" class="filter-btn active">B2B</button>
             <button onclick="setCompareSegment('b2c')" id="cmp-seg-b2c" class="filter-btn">B2C</button>
           </div>
-
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div class="bg-indigo-50 p-4 rounded-lg">
               <h3 class="font-semibold text-indigo-800 mb-2">📅 Период 1 (базовый)</h3>
@@ -267,7 +264,6 @@
           </div>
         </div>
 
-        <!-- ВОРОНКА СРАВНЕНИЯ -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Воронка сравнения</h2>
           <div class="overflow-x-auto">
@@ -283,7 +279,6 @@
           </div>
         </div>
 
-        <!-- БЮДЖЕТНЫЕ КОРИДОРЫ (перенесено вверх) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Сравнение бюджетных коридоров</h2>
           <div class="overflow-x-auto">
@@ -304,7 +299,6 @@
           </div>
         </div>
 
-        <!-- ABC С ФИЛЬТРАМИ И СВОРАЧИВАНИЕМ -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-xl font-bold text-gray-800 mb-2">👥 Сравнение клиентов по ABC</h2>
           <p class="text-xs text-gray-500 mb-4">
@@ -312,14 +306,11 @@
             <span class="chip lost-client">− Потерян</span> — был в Периоде 1, нет в Периоде 2
             <span class="chip stay-client">= Остался</span> — есть в обоих периодах
           </p>
-          
-          <!-- Фильтры по статусам -->
           <div class="flex gap-2 mb-4">
             <button onclick="toggleStatusFilter('new')" id="filter-new" class="filter-btn active">+ Новый</button>
             <button onclick="toggleStatusFilter('lost')" id="filter-lost" class="filter-btn active">− Потерян</button>
             <button onclick="toggleStatusFilter('stay')" id="filter-stay" class="filter-btn active">= Остался</button>
           </div>
-
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <div class="bg-green-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Новых клиентов</p><p id="cmp-new-clients" class="text-2xl font-bold text-green-700">-</p></div>
             <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Потерянных клиентов</p><p id="cmp-lost-clients" class="text-2xl font-bold text-red-700">-</p></div>
@@ -330,11 +321,11 @@
               <thead class="bg-gray-50 border-b border-gray-200"><tr>
                 <th class="px-3 py-2 text-left font-semibold text-gray-600">Статус</th>
                 <th class="px-3 py-2 text-left font-semibold text-gray-600">Клиент</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа в Периоде 1 (A/B/C)">Группа П1 ↕</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа в Периоде 2 (A/B/C)">Группа П2 ↕</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Выручка в Периоде 1 (успешные + заказы)">Выручка П1 ↕</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Выручка в Периоде 2 (успешные + заказы)">Выручка П2 ↕</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Разница: Выручка П2 − Выручка П1">Δ Выручка ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа клиента в Периоде 1 (A/B/C). '-' = клиента не было">Группа П1 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа клиента в Периоде 2 (A/B/C). '-' = клиента не было">Группа П2 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Сумма денег: успешные сделки + заказы в Периоде 1">Выручка П1 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Сумма денег: успешные сделки + заказы в Периоде 2">Выручка П2 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Выручка П2 минус Выручка П1">Δ Выручка ↕</th>
               </tr></thead>
               <tbody id="cmp-abc-body" class="divide-y divide-gray-100"></tbody>
             </table>
@@ -348,9 +339,9 @@
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGVYV8t0jRsoc3y8NqxK20dFUB2YR6F8ZjQ5OZJtfhCoyo7r8eNKi93cc6hY4w9c0i/exec';
 
     const WON_STAGES=['Оплачен полностью','Обратная связь','Успешно реализовано'];
-    const ORDER_STAGE='Заказ (Предоплата) в работе';
+    const ORDER_STAGE='Заказ'; // ИСПРАВЛЕНО: baseStage обрезает "(" → стадия = "Заказ"
     const LOST_BASE='Закрыто и не реализовано';
-    const FUNNEL_MAP={'Неразобранное':0,'Новый':0,'В работе':0,'Квалифицирован':1,'Встреча назначена':2,'Встреча проведена':2,'ТЗ на просчет получено':3,'КП отправлено':3,'счет/договор отправлен':4,'Заказ (Предоплата) в работе':5,'Оплачен полностью':6,'Обратная связь':6,'Успешно реализовано':6};
+    const FUNNEL_MAP={'Неразобранное':0,'Новый':0,'В работе':0,'Квалифицирован':1,'Встреча назначена':2,'Встреча проведена':2,'ТЗ на просчет получено':3,'КП отправлено':3,'счет/договор отправлен':4,'Заказ':5,'Оплачен полностью':6,'Обратная связь':6,'Успешно реализовано':6};
 
     function baseStage(d){
       const s = String(d.stage||'');
@@ -369,7 +360,7 @@
     function isWon(d){ return WON_STAGES.includes(baseStage(d)); }
     function isOrder(d){ return baseStage(d) === ORDER_STAGE; }
     function isLost(d){ return baseStage(d) === LOST_BASE; }
-    function isRevenue(d){ return isWon(d) || isOrder(d); } // Выручка = успешные + заказы
+    function isRevenue(d){ return isWon(d) || isOrder(d); }
     function funnelIdxOf(d){ const b=baseStage(d); return FUNNEL_MAP[b]!==undefined?FUNNEL_MAP[b]:-1; }
 
     let RAW_DEALS=[], FILTERS={}, currentTab='b2b', filteredDeals=[], abcData=[];
@@ -379,8 +370,6 @@
     let abcGroupOpen={A:false,B:false,C:false};
     let abcClientOpen={}, bcGroupOpen={}, bcClientOpen={}, iwClientOpen={}, iwShowAll=false;
     let clReasonOpen={}, clClientOpen={}, clShowAll=false;
-    
-    // Для вкладки сравнения
     let compareSegment = 'b2b';
     let statusFilters = { new: true, lost: true, stay: true };
     let compareGroupOpen = { new: true, lost: true, stay: true };
@@ -514,7 +503,6 @@
         if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,revenueWithOrders:0,closedDates:[],dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[]};
         clientMap[d.client].deals+=1;
         clientMap[d.client].dealsList.push(d);
-        // Выручка = успешные + заказы
         if(isRevenue(d)) clientMap[d.client].revenueWithOrders+=d.amount;
         if((isWon(d)||isLost(d))&&d.closed){
           clientMap[d.client].closedDates.push(d.closed);
@@ -550,7 +538,7 @@
 
     function renderSummary(){
       const totalLeads=filteredDeals.length;
-      const revAll=filteredDeals.filter(isRevenue).reduce((s,d)=>s+d.amount,0); // Выручка = успешные + заказы
+      const revAll=filteredDeals.filter(isRevenue).reduce((s,d)=>s+d.amount,0);
       const successDeals=filteredDeals.filter(isWon);
       const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
       const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
@@ -635,7 +623,7 @@
     }
 
     function renderFunnel(){
-      const names=['Лиды','Квалифицированные','Встречи / замеры','Отправленные КП','Подписанные КП','Договоры / аванс','Сделки (закрытые)'];
+      const names=['Лиды','Квалифицированные','Встречи / замеры','Отправленные КП','Подписанные КП','Договоры / аванс (Заказ)','Сделки (закрытые)'];
       const total=filteredDeals.length;
       const counts=names.map((_,i)=>i===0?total:filteredDeals.filter(d=>funnelIdxOf(d)>=i).length);
       document.getElementById('funnel-total').textContent=`Всего лидов: ${total}`;
@@ -661,7 +649,7 @@
         tr.className = 'deal-row';
         const dateStr = d.created ? new Date(d.created).toLocaleDateString('ru-RU') : '-';
         const reason = reasonOf(d);
-        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reason||'без причины'}</span>` : isOrder(d) ? '<span class="chip" style="background:#fef3c7;color:#92400e">заказ</span>' : '';
+        const tag = isWon(d) ? '<span class="chip ok">успех</span>' : isLost(d) ? `<span class="chip err">отказ: ${reason||'без причины'}</span>` : isOrder(d) ? '<span class="chip" style="background:#fef3c7;color:#92400e">заказ ✓ в выручке</span>' : '';
         tr.innerHTML = `
           <td colspan="${colspan}" class="pl-12">
             <div class="flex flex-wrap items-center gap-3 py-1 text-xs">
@@ -1020,24 +1008,34 @@
       document.getElementById('cmp-diff').className=`text-lg font-bold ${diff>0?'text-green-700':diff<0?'text-red-700':'text-gray-700'}`;
 
       // Воронка сравнения
-      const m1=buildFunnelMetrics(deals1);
-      const m2=buildFunnelMetrics(deals2);
+      const f1=buildFunnelMetrics(deals1);
+      const f2=buildFunnelMetrics(deals2);
       const funnelRows=[
-        {label:'Всего лидов', v1:m1.totalLeads, v2:m2.totalLeads, fmt:v=>v.toLocaleString('ru-RU')},
-        {label:'Выручка всех лидов (успешные + заказы)', v1:m1.revAll, v2:m2.revAll, fmt:v=>fmtMoney(v)},
-        {label:'Всего успешных сделок', v1:m1.successDeals, v2:m2.successDeals, fmt:v=>v.toLocaleString('ru-RU')},
-        {label:'Выручка успешных', v1:m1.revSuccess, v2:m2.revSuccess, fmt:v=>fmtMoney(v)},
-        {label:'Конверсия', v1:m1.conv+'%', v2:m2.conv+'%', fmt:v=>v, isPercent:true},
-        {label:'Средний чек (по успешным)', v1:m1.avgCheck, v2:m2.avgCheck, fmt:v=>fmtMoney(v)},
-        {label:'Средний бюджет (по всем)', v1:m1.avgBudgetAll, v2:m2.avgBudgetAll, fmt:v=>fmtMoney(v)},
-        {label:'Средний бюджет по НЕуспешным', v1:m1.avgBudgetLost, v2:m2.avgBudgetLost, fmt:v=>fmtMoney(v)}
+        {label:'Всего лидов', v1:f1.totalLeads, v2:f2.totalLeads, fmt:v=>v.toLocaleString('ru-RU')},
+        {label:'Выручка (успешные + заказы)', v1:f1.revAll, v2:f2.revAll, fmt:v=>fmtMoney(v)},
+        {label:'Всего успешных сделок', v1:f1.successDeals, v2:f2.successDeals, fmt:v=>v.toLocaleString('ru-RU')},
+        {label:'Выручка успешных', v1:f1.revSuccess, v2:f2.revSuccess, fmt:v=>fmtMoney(v)},
+        {label:'Конверсия', v1:f1.conv, v2:f2.conv, fmt:v=>v+'%', isPercent:true},
+        {label:'Средний чек (по успешным)', v1:f1.avgCheck, v2:f2.avgCheck, fmt:v=>fmtMoney(v)},
+        {label:'Средний бюджет (по всем)', v1:f1.avgBudgetAll, v2:f2.avgBudgetAll, fmt:v=>fmtMoney(v)},
+        {label:'Средний бюджет по НЕуспешным', v1:f1.avgBudgetLost, v2:f2.avgBudgetLost, fmt:v=>fmtMoney(v)}
       ];
       const funnelBody=document.getElementById('cmp-funnel-body');
       funnelBody.innerHTML='';
       funnelRows.forEach(r=>{
-        const diff=r.isPercent?r.v2:r.v2-r.v1;
-        const diffStr=r.isPercent?diff:(diff>0?'+':'')+fmtMoney(diff);
-        const diffClass=r.isPercent?'comp-same':(diff>0?'comp-up':diff<0?'comp-down':'comp-same');
+        let diffStr, diffClass;
+        if(r.isPercent){
+          const d=parseFloat(r.v2)-parseFloat(r.v1);
+          diffStr=(d>0?'+':'')+d.toFixed(1)+' п.п.';
+          diffClass=d>0?'comp-up':d<0?'comp-down':'comp-same';
+        } else {
+          const d=r.v2-r.v1;
+          diffStr=(d>0?'+':'')+r.fmt(Math.abs(d)).replace(/^(\+|-)/,'') + (d<0?' −':'');
+          if(d<0) diffStr='−'+r.fmt(Math.abs(d));
+          else if(d>0) diffStr='+'+r.fmt(d);
+          else diffStr='0';
+          diffClass=d>0?'comp-up':d<0?'comp-down':'comp-same';
+        }
         const tr=document.createElement('tr');
         tr.className='border-b hover:bg-gray-50';
         tr.innerHTML=`
@@ -1075,22 +1073,17 @@
       document.getElementById('cmp-lost-clients').textContent=lostCount;
       document.getElementById('cmp-stay-clients').textContent=stayCount;
 
-      // Группировка по статусам с сворачиванием
       const tbody=document.getElementById('cmp-abc-body');
       tbody.innerHTML='';
-      
       const statusGroups = [
         { key: 'new', label: '+ Новый', class: 'new-client', rows: rows.filter(r=>r.status==='+ Новый') },
         { key: 'stay', label: '= Остался', class: 'stay-client', rows: rows.filter(r=>r.status==='= Остался') },
         { key: 'lost', label: '− Потерян', class: 'lost-client', rows: rows.filter(r=>r.status==='− Потерян') }
       ];
-
       statusGroups.forEach(group=>{
         if(!statusFilters[group.key]) return;
         if(group.rows.length===0) return;
-
         const isOpen = compareGroupOpen[group.key];
-        
         const trHeader=document.createElement('tr');
         trHeader.className='group-header bg-gray-100';
         trHeader.innerHTML=`
@@ -1101,7 +1094,6 @@
           </td>`;
         trHeader.onclick=()=>{compareGroupOpen[group.key]=!compareGroupOpen[group.key];runCompare();};
         tbody.appendChild(trHeader);
-
         if(isOpen){
           group.rows.forEach(r=>{
             const diffClass=r.revDiff>0?'comp-up':r.revDiff<0?'comp-down':'comp-same';
@@ -1121,7 +1113,6 @@
         }
       });
 
-      // Бюджетные коридоры
       const bc1=buildBcMap(deals1);
       const bc2=buildBcMap(deals2);
       const bcBody=document.getElementById('cmp-bc-body');
@@ -1130,7 +1121,6 @@
         const c1=bc1[name], c2=bc2[name]||{clients:0,budget:0,success:0};
         const dClients=c2.clients-c1.clients;
         const dBudget=c2.budget-c1.budget;
-        const dSuccess=c2.success-c1.success;
         const tr=document.createElement('tr');
         tr.className='border-b hover:bg-gray-50';
         tr.innerHTML=`
