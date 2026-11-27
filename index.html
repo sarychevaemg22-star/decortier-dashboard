@@ -41,6 +41,10 @@
     .period-cell { background:#fafafa; }
     .period-header { background:#f1f5f9; }
     .comp-up { color:#065f46; } .comp-down { color:#991b1b; } .comp-same { color:#6b7280; }
+    .group-header { cursor: pointer; user-select: none; }
+    .group-header:hover { filter: brightness(0.95); }
+    .filter-btn { padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #e5e7eb; background: white; }
+    .filter-btn.active { background: #4338ca; color: white; border-color: #4338ca; }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased">
@@ -232,7 +236,14 @@
       <div id="tab-compare-content" class="hidden space-y-6">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сравнение двух периодов</h2>
-          <p class="text-xs text-gray-500 mb-4">Выберите два периода для сравнения. Сегмент (B2B/B2C) берётся из активной вкладки.</p>
+          <p class="text-xs text-gray-500 mb-4">Выберите два периода для сравнения.</p>
+          
+          <!-- Переключатель B2B/B2C -->
+          <div class="flex gap-2 mb-4">
+            <button onclick="setCompareSegment('b2b')" id="cmp-seg-b2b" class="filter-btn active">B2B</button>
+            <button onclick="setCompareSegment('b2c')" id="cmp-seg-b2c" class="filter-btn">B2C</button>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div class="bg-indigo-50 p-4 rounded-lg">
               <h3 class="font-semibold text-indigo-800 mb-2">📅 Период 1 (базовый)</h3>
@@ -257,34 +268,7 @@
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 class="text-xl font-bold text-gray-800 mb-2">👥 Сравнение клиентов по ABC</h2>
-          <p class="text-xs text-gray-500 mb-4">
-            <span class="chip new-client">+ Новый</span> — появился в Периоде 2, не было в Периоде 1
-            <span class="chip lost-client">− Потерян</span> — был в Периоде 1, нет в Периоде 2
-            <span class="chip stay-client">= Остался</span> — есть в обоих периодах
-          </p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <div class="bg-green-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Новых клиентов</p><p id="cmp-new-clients" class="text-2xl font-bold text-green-700">-</p></div>
-            <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Потерянных клиентов</p><p id="cmp-lost-clients" class="text-2xl font-bold text-red-700">-</p></div>
-            <div class="bg-blue-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Осталось клиентов</p><p id="cmp-stay-clients" class="text-2xl font-bold text-blue-700">-</p></div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-              <thead class="bg-gray-50 border-b border-gray-200"><tr>
-                <th class="px-3 py-2 text-left font-semibold text-gray-600">Статус</th>
-                <th class="px-3 py-2 text-left font-semibold text-gray-600">Клиент</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600">Группа П1</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600">Группа П2</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600">Выручка П1</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600">Выручка П2</th>
-                <th class="px-3 py-2 text-right font-semibold text-gray-600">Δ Выручка</th>
-              </tr></thead>
-              <tbody id="cmp-abc-body" class="divide-y divide-gray-100"></tbody>
-            </table>
-          </div>
-        </div>
-
+        <!-- БЮДЖЕТНЫЕ КОРИДОРЫ (перенесено вверх) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Сравнение бюджетных коридоров</h2>
           <div class="overflow-x-auto">
@@ -301,6 +285,43 @@
                 <th class="px-3 py-2 text-right font-semibold text-gray-600">Успешных П2</th>
               </tr></thead>
               <tbody id="cmp-bc-body" class="divide-y divide-gray-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ABC С ФИЛЬТРАМИ И СВОРАЧИВАНИЕМ -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-2">👥 Сравнение клиентов по ABC</h2>
+          <p class="text-xs text-gray-500 mb-4">
+            <span class="chip new-client">+ Новый</span> — появился в Периоде 2, не было в Периоде 1
+            <span class="chip lost-client">− Потерян</span> — был в Периоде 1, нет в Периоде 2
+            <span class="chip stay-client">= Остался</span> — есть в обоих периодах
+          </p>
+          
+          <!-- Фильтры по статусам -->
+          <div class="flex gap-2 mb-4">
+            <button onclick="toggleStatusFilter('new')" id="filter-new" class="filter-btn active">+ Новый</button>
+            <button onclick="toggleStatusFilter('lost')" id="filter-lost" class="filter-btn active">− Потерян</button>
+            <button onclick="toggleStatusFilter('stay')" id="filter-stay" class="filter-btn active">= Остался</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="bg-green-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Новых клиентов</p><p id="cmp-new-clients" class="text-2xl font-bold text-green-700">-</p></div>
+            <div class="bg-red-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Потерянных клиентов</p><p id="cmp-lost-clients" class="text-2xl font-bold text-red-700">-</p></div>
+            <div class="bg-blue-50 p-3 rounded-lg"><p class="text-xs text-gray-500">Осталось клиентов</p><p id="cmp-stay-clients" class="text-2xl font-bold text-blue-700">-</p></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Статус</th>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Клиент</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа в Периоде 1 (A/B/C)">Группа П1 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="ABC-группа в Периоде 2 (A/B/C)">Группа П2 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Выручка в Периоде 1 (успешные + заказы)">Выручка П1 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Выручка в Периоде 2 (успешные + заказы)">Выручка П2 ↕</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600" title="Разница: Выручка П2 − Выручка П1">Δ Выручка ↕</th>
+              </tr></thead>
+              <tbody id="cmp-abc-body" class="divide-y divide-gray-100"></tbody>
             </table>
           </div>
         </div>
@@ -342,6 +363,11 @@
     let abcGroupOpen={A:false,B:false,C:false};
     let abcClientOpen={}, bcGroupOpen={}, bcClientOpen={}, iwClientOpen={}, iwShowAll=false;
     let clReasonOpen={}, clClientOpen={}, clShowAll=false;
+    
+    // Для вкладки сравнения
+    let compareSegment = 'b2b';
+    let statusFilters = { new: true, lost: true, stay: true };
+    let compareGroupOpen = { new: true, lost: true, stay: true };
 
     fetch(APPS_SCRIPT_URL + '?action=getData')
       .then(r => r.json())
@@ -437,6 +463,19 @@
         m1.innerHTML+=`<option value="${m}">${MONTH_NAMES[m-1]} (${m})</option>`;
         m2.innerHTML+=`<option value="${m}">${MONTH_NAMES[m-1]} (${m})</option>`;
       });
+    }
+
+    function setCompareSegment(seg){
+      compareSegment = seg;
+      document.getElementById('cmp-seg-b2b').classList.toggle('active', seg==='b2b');
+      document.getElementById('cmp-seg-b2c').classList.toggle('active', seg==='b2c');
+      runCompare();
+    }
+
+    function toggleStatusFilter(status){
+      statusFilters[status] = !statusFilters[status];
+      document.getElementById('filter-'+status).classList.toggle('active', statusFilters[status]);
+      runCompare();
     }
 
     function applyFilters(){
@@ -929,7 +968,7 @@
       const y2=document.getElementById('cmp-year2').value;
       const m1=document.getElementById('cmp-month1').value;
       const m2=document.getElementById('cmp-month2').value;
-      const seg=currentTab==='b2b'?'b2b':'b2c';
+      const seg=compareSegment;
       document.getElementById('cmp-segment').textContent=seg.toUpperCase();
 
       if(!y1||!y2){
@@ -976,24 +1015,54 @@
       document.getElementById('cmp-lost-clients').textContent=lostCount;
       document.getElementById('cmp-stay-clients').textContent=stayCount;
 
+      // Группировка по статусам с сворачиванием
       const tbody=document.getElementById('cmp-abc-body');
       tbody.innerHTML='';
-      rows.forEach(r=>{
-        const diffClass=r.revDiff>0?'comp-up':r.revDiff<0?'comp-down':'comp-same';
-        const diffSign=r.revDiff>0?'+':'';
-        const tr=document.createElement('tr');
-        tr.className='border-b hover:bg-gray-50';
-        tr.innerHTML=`
-          <td class="px-3 py-2"><span class="chip ${r.statusClass}">${r.status}</span></td>
-          <td class="px-3 py-2 font-medium text-gray-900">${r.client}</td>
-          <td class="px-3 py-2 text-right text-gray-600">${r.abc1}</td>
-          <td class="px-3 py-2 text-right text-gray-600">${r.abc2}</td>
-          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev1)}</td>
-          <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev2)}</td>
-          <td class="px-3 py-2 text-right font-bold ${diffClass}">${diffSign}${fmtMoney(r.revDiff)}</td>`;
-        tbody.appendChild(tr);
+      
+      const statusGroups = [
+        { key: 'new', label: '+ Новый', class: 'new-client', rows: rows.filter(r=>r.status==='+ Новый') },
+        { key: 'stay', label: '= Остался', class: 'stay-client', rows: rows.filter(r=>r.status==='= Остался') },
+        { key: 'lost', label: '− Потерян', class: 'lost-client', rows: rows.filter(r=>r.status==='− Потерян') }
+      ];
+
+      statusGroups.forEach(group=>{
+        if(!statusFilters[group.key]) return; // фильтр
+        if(group.rows.length===0) return;
+
+        const isOpen = compareGroupOpen[group.key];
+        
+        // Заголовок группы
+        const trHeader=document.createElement('tr');
+        trHeader.className='group-header bg-gray-100';
+        trHeader.innerHTML=`
+          <td colspan="7" class="px-3 py-2 font-bold text-gray-800">
+            <span class="expand-icon ${isOpen?'open':''}">▶</span>
+            <span class="chip ${group.class}">${group.label}</span>
+            <span class="text-gray-600 ml-2">${group.rows.length} клиентов</span>
+          </td>`;
+        trHeader.onclick=()=>{compareGroupOpen[group.key]=!compareGroupOpen[group.key];runCompare();};
+        tbody.appendChild(trHeader);
+
+        if(isOpen){
+          group.rows.forEach(r=>{
+            const diffClass=r.revDiff>0?'comp-up':r.revDiff<0?'comp-down':'comp-same';
+            const diffSign=r.revDiff>0?'+':'';
+            const tr=document.createElement('tr');
+            tr.className='border-b hover:bg-gray-50';
+            tr.innerHTML=`
+              <td class="px-3 py-2"><span class="chip ${r.statusClass}">${r.status}</span></td>
+              <td class="px-3 py-2 font-medium text-gray-900">${r.client}</td>
+              <td class="px-3 py-2 text-right text-gray-600">${r.abc1}</td>
+              <td class="px-3 py-2 text-right text-gray-600">${r.abc2}</td>
+              <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev1)}</td>
+              <td class="px-3 py-2 text-right text-gray-700">${fmtMoney(r.rev2)}</td>
+              <td class="px-3 py-2 text-right font-bold ${diffClass}">${diffSign}${fmtMoney(r.revDiff)}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
       });
 
+      // Бюджетные коридоры
       const bc1=buildBcMap(deals1);
       const bc2=buildBcMap(deals2);
       const bcBody=document.getElementById('cmp-bc-body');
