@@ -103,7 +103,7 @@
           <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сводка по вкладке <span id="summary-tab" class="text-indigo-600"></span></h2>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div class="text-center"><p class="text-xs text-gray-500">Всего лидов</p><p id="sum-leads" class="text-2xl font-bold text-gray-900">-</p></div>
-            <div class="text-center"><p class="text-xs text-gray-500">Выручка всех лидов</p><p id="sum-rev-all" class="text-2xl font-bold text-gray-900">-</p></div>
+            <div class="text-center"><p class="text-xs text-gray-500">Выручка (успешные + заказы)</p><p id="sum-rev-all" class="text-2xl font-bold text-gray-900">-</p></div>
             <div class="text-center"><p class="text-xs text-gray-500">Всего успешных сделок</p><p id="sum-success" class="text-2xl font-bold text-green-700">-</p></div>
             <div class="text-center"><p class="text-xs text-gray-500">Выручка успешных</p><p id="sum-rev-succ" class="text-2xl font-bold text-green-700">-</p></div>
             <div class="text-center"><p class="text-xs text-gray-500">Конверсия</p><p id="sum-conv" class="text-2xl font-bold text-indigo-700">-</p></div>
@@ -236,7 +236,6 @@
       <div id="tab-compare-content" class="hidden space-y-6">
         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
           <h2 class="text-lg font-bold text-gray-800 mb-4">📊 Сравнение двух периодов</h2>
-          <p class="text-xs text-gray-500 mb-4">Выберите два периода для сравнения.</p>
           
           <!-- Переключатель B2B/B2C -->
           <div class="flex gap-2 mb-4">
@@ -265,6 +264,22 @@
             <div class="bg-indigo-50 p-3 rounded"><p class="text-xs text-gray-500">Период 1: лидов</p><p id="cmp-leads1" class="text-lg font-bold text-indigo-700">-</p></div>
             <div class="bg-green-50 p-3 rounded"><p class="text-xs text-gray-500">Период 2: лидов</p><p id="cmp-leads2" class="text-lg font-bold text-green-700">-</p></div>
             <div class="bg-amber-50 p-3 rounded"><p class="text-xs text-gray-500">Разница</p><p id="cmp-diff" class="text-lg font-bold text-amber-700">-</p></div>
+          </div>
+        </div>
+
+        <!-- ВОРОНКА СРАВНЕНИЯ -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Воронка сравнения</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200"><tr>
+                <th class="px-3 py-2 text-left font-semibold text-gray-600">Показатель</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Период 1</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Период 2</th>
+                <th class="px-3 py-2 text-right font-semibold text-gray-600">Разница</th>
+              </tr></thead>
+              <tbody id="cmp-funnel-body" class="divide-y divide-gray-100"></tbody>
+            </table>
           </div>
         </div>
 
@@ -354,6 +369,7 @@
     function isWon(d){ return WON_STAGES.includes(baseStage(d)); }
     function isOrder(d){ return baseStage(d) === ORDER_STAGE; }
     function isLost(d){ return baseStage(d) === LOST_BASE; }
+    function isRevenue(d){ return isWon(d) || isOrder(d); } // Выручка = успешные + заказы
     function funnelIdxOf(d){ const b=baseStage(d); return FUNNEL_MAP[b]!==undefined?FUNNEL_MAP[b]:-1; }
 
     let RAW_DEALS=[], FILTERS={}, currentTab='b2b', filteredDeals=[], abcData=[];
@@ -498,8 +514,8 @@
         if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,revenueWithOrders:0,closedDates:[],dealsList:[],responseTimes:[],cycleTimes:[],dealGaps:[]};
         clientMap[d.client].deals+=1;
         clientMap[d.client].dealsList.push(d);
-        // ABC-выручка: won + Заказ
-        if(isWon(d)||isOrder(d)) clientMap[d.client].revenueWithOrders+=d.amount;
+        // Выручка = успешные + заказы
+        if(isRevenue(d)) clientMap[d.client].revenueWithOrders+=d.amount;
         if((isWon(d)||isLost(d))&&d.closed){
           clientMap[d.client].closedDates.push(d.closed);
           if(d.created){const cy=(d.closed-d.created)/86400000;if(cy>=0&&cy<1000)clientMap[d.client].cycleTimes.push(cy);}
@@ -534,7 +550,7 @@
 
     function renderSummary(){
       const totalLeads=filteredDeals.length;
-      const revAll=filteredDeals.reduce((s,d)=>s+d.amount,0);
+      const revAll=filteredDeals.filter(isRevenue).reduce((s,d)=>s+d.amount,0); // Выручка = успешные + заказы
       const successDeals=filteredDeals.filter(isWon);
       const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
       const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
@@ -548,7 +564,7 @@
 
     function renderPeriodStats(){
       const totalLeads=filteredDeals.length;
-      const revAll=filteredDeals.reduce((s,d)=>s+d.amount,0);
+      const revAll=filteredDeals.filter(isRevenue).reduce((s,d)=>s+d.amount,0);
       const successDeals=filteredDeals.filter(isWon);
       const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
       const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
@@ -577,7 +593,7 @@
       tbody.innerHTML='';
       const rows=[
         {label:'Всего лидов', values:[totalLeads/periodMonths, totalLeads/periodWeeks, totalLeads/periodDays], fmt:v=>Math.round(v).toLocaleString('ru-RU')},
-        {label:'Выручка всех лидов', values:[revAll/periodMonths, revAll/periodWeeks, revAll/periodDays], fmt:v=>fmtMoney(v)},
+        {label:'Выручка (успешные + заказы)', values:[revAll/periodMonths, revAll/periodWeeks, revAll/periodDays], fmt:v=>fmtMoney(v)},
         {label:'Всего успешных сделок', values:[successDeals.length/periodMonths, successDeals.length/periodWeeks, successDeals.length/periodDays], fmt:v=>Math.round(v).toLocaleString('ru-RU')},
         {label:'Выручка успешных', values:[revSuccess/periodMonths, revSuccess/periodWeeks, revSuccess/periodDays], fmt:v=>fmtMoney(v)},
         {label:'Конверсия', values:[conv+'%', conv+'%', conv+'%'], fmt:v=>v, isStatic:true},
@@ -770,7 +786,7 @@
         {name:'500 тыс – 1 млн',min:500000,max:1000000},{name:'более 1 млн',min:1000000,max:Infinity}
       ];
       const clientTotalLTV={};
-      filteredDeals.forEach(d=>{if(!clientTotalLTV[d.client])clientTotalLTV[d.client]=0;if(isWon(d))clientTotalLTV[d.client]+=d.amount;});
+      filteredDeals.forEach(d=>{if(!clientTotalLTV[d.client])clientTotalLTV[d.client]=0;if(isRevenue(d))clientTotalLTV[d.client]+=d.amount;});
       const tbody=document.getElementById('bc-table-body');tbody.innerHTML='';
       corridors.forEach(corridor=>{
         const dealsInCorridor=filteredDeals.filter(d=>d.amount>=corridor.min&&d.amount<corridor.max);
@@ -780,7 +796,7 @@
           clientMap[d.client].deals+=1;
           clientMap[d.client].budget+=d.amount;
           clientMap[d.client].dealsList.push(d);
-          if(isWon(d)){
+          if(isRevenue(d)){
             clientMap[d.client].success+=1;
             clientMap[d.client].successRevenue+=d.amount;
             if(d.created&&d.closed){const cy=(d.closed-d.created)/86400000;if(cy>=0&&cy<1000)clientMap[d.client].cycleTimes.push(cy);}
@@ -933,7 +949,7 @@
       deals.forEach(d=>{
         if(!clientMap[d.client])clientMap[d.client]={client:d.client,deals:0,closedDeals:0,revenue:0,revenueWithOrders:0};
         clientMap[d.client].deals+=1;
-        if(isWon(d)||isOrder(d)) clientMap[d.client].revenueWithOrders+=d.amount;
+        if(isRevenue(d)) clientMap[d.client].revenueWithOrders+=d.amount;
         if(isWon(d)){clientMap[d.client].closedDeals+=1;clientMap[d.client].revenue+=d.amount;}
       });
       const clientsArr=Object.values(clientMap).sort((a,b)=>b.revenueWithOrders-a.revenueWithOrders);
@@ -957,10 +973,24 @@
         const cd=deals.filter(d=>d.amount>=c.min&&d.amount<c.max);
         const clients=new Set(cd.map(d=>d.client));
         const budget=cd.reduce((s,d)=>s+d.amount,0);
-        const success=cd.filter(isWon).length;
+        const success=cd.filter(isRevenue).length;
         result[c.name]={clients:clients.size, budget, success, deals:cd.length};
       });
       return result;
+    }
+
+    function buildFunnelMetrics(deals){
+      const totalLeads=deals.length;
+      const revAll=deals.filter(isRevenue).reduce((s,d)=>s+d.amount,0);
+      const successDeals=deals.filter(isWon);
+      const revSuccess=successDeals.reduce((s,d)=>s+d.amount,0);
+      const conv=totalLeads>0?((successDeals.length/totalLeads)*100).toFixed(1):'0.0';
+      const avgCheck=successDeals.length>0?(revSuccess/successDeals.length):0;
+      const avgBudgetAll=totalLeads>0?(revAll/totalLeads):0;
+      const lostDeals=deals.filter(isLost);
+      const revLost=lostDeals.reduce((s,d)=>s+d.amount,0);
+      const avgBudgetLost=lostDeals.length>0?(revLost/lostDeals.length):0;
+      return { totalLeads, revAll, successDeals: successDeals.length, revSuccess, conv, avgCheck, avgBudgetAll, avgBudgetLost };
     }
 
     function runCompare(){
@@ -975,6 +1005,7 @@
         document.getElementById('cmp-leads1').textContent='-';
         document.getElementById('cmp-leads2').textContent='-';
         document.getElementById('cmp-diff').textContent='Выберите оба года';
+        document.getElementById('cmp-funnel-body').innerHTML='';
         document.getElementById('cmp-abc-body').innerHTML='<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Выберите годы для обоих периодов</td></tr>';
         document.getElementById('cmp-bc-body').innerHTML='';
         return;
@@ -987,6 +1018,35 @@
       const diff=deals2.length-deals1.length;
       document.getElementById('cmp-diff').textContent=(diff>0?'+':'')+diff;
       document.getElementById('cmp-diff').className=`text-lg font-bold ${diff>0?'text-green-700':diff<0?'text-red-700':'text-gray-700'}`;
+
+      // Воронка сравнения
+      const m1=buildFunnelMetrics(deals1);
+      const m2=buildFunnelMetrics(deals2);
+      const funnelRows=[
+        {label:'Всего лидов', v1:m1.totalLeads, v2:m2.totalLeads, fmt:v=>v.toLocaleString('ru-RU')},
+        {label:'Выручка всех лидов (успешные + заказы)', v1:m1.revAll, v2:m2.revAll, fmt:v=>fmtMoney(v)},
+        {label:'Всего успешных сделок', v1:m1.successDeals, v2:m2.successDeals, fmt:v=>v.toLocaleString('ru-RU')},
+        {label:'Выручка успешных', v1:m1.revSuccess, v2:m2.revSuccess, fmt:v=>fmtMoney(v)},
+        {label:'Конверсия', v1:m1.conv+'%', v2:m2.conv+'%', fmt:v=>v, isPercent:true},
+        {label:'Средний чек (по успешным)', v1:m1.avgCheck, v2:m2.avgCheck, fmt:v=>fmtMoney(v)},
+        {label:'Средний бюджет (по всем)', v1:m1.avgBudgetAll, v2:m2.avgBudgetAll, fmt:v=>fmtMoney(v)},
+        {label:'Средний бюджет по НЕуспешным', v1:m1.avgBudgetLost, v2:m2.avgBudgetLost, fmt:v=>fmtMoney(v)}
+      ];
+      const funnelBody=document.getElementById('cmp-funnel-body');
+      funnelBody.innerHTML='';
+      funnelRows.forEach(r=>{
+        const diff=r.isPercent?r.v2:r.v2-r.v1;
+        const diffStr=r.isPercent?diff:(diff>0?'+':'')+fmtMoney(diff);
+        const diffClass=r.isPercent?'comp-same':(diff>0?'comp-up':diff<0?'comp-down':'comp-same');
+        const tr=document.createElement('tr');
+        tr.className='border-b hover:bg-gray-50';
+        tr.innerHTML=`
+          <td class="px-3 py-2 font-medium text-gray-700">${r.label}</td>
+          <td class="px-3 py-2 text-right text-indigo-700 font-semibold">${r.fmt(r.v1)}</td>
+          <td class="px-3 py-2 text-right text-green-700 font-semibold">${r.fmt(r.v2)}</td>
+          <td class="px-3 py-2 text-right font-bold ${diffClass}">${diffStr}</td>`;
+        funnelBody.appendChild(tr);
+      });
 
       const abc1=buildAbcMap(deals1);
       const abc2=buildAbcMap(deals2);
@@ -1026,12 +1086,11 @@
       ];
 
       statusGroups.forEach(group=>{
-        if(!statusFilters[group.key]) return; // фильтр
+        if(!statusFilters[group.key]) return;
         if(group.rows.length===0) return;
 
         const isOpen = compareGroupOpen[group.key];
         
-        // Заголовок группы
         const trHeader=document.createElement('tr');
         trHeader.className='group-header bg-gray-100';
         trHeader.innerHTML=`
